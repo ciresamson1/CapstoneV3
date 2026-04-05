@@ -20,6 +20,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
 
+    Route::post('/tasks/{id}/update-dates', [TaskController::class, 'updateDates'])->name('tasks.update-dates');
+    Route::post('/tasks/{id}/toggle', [\App\Http\Controllers\TaskController::class, 'toggle']);
     Route::post('/subtasks/{id}/toggle', [SubTaskController::class, 'toggle'])->name('subtasks.toggle');
 });
 

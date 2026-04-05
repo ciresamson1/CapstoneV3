@@ -34,6 +34,29 @@ class TaskController extends Controller
             'end_date' => $request->end_date,
         ]);
 
-        return redirect()->route('projects.index');
+        return redirect()->route('projects.show', $projectId);
     }
+
+    public function updateDates(Request $request, $id)
+    {
+        $task = Task::findOrFail($id);
+
+        $task->update([
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+        ]);
+
+        return response()->json(['status' => 'updated']);
+    }
+
+    public function toggle($id)
+    {
+        $task = \App\Models\Task::findOrFail($id);
+
+        $task->progress = $task->progress == 100 ? 0 : 100;
+        $task->save();
+
+        return response()->json(['status' => 'ok']);
+    }
+
 }

@@ -7,7 +7,7 @@
 </div>
 
 @foreach($projects as $project)
-<div class="card mb-3">
+<div class="card mb-3 p-3">
     <h4>{{ $project->name }}</h4>
     <p>{{ $project->description }}</p>
 
@@ -17,7 +17,14 @@
         </div>
     </div>
 
-    <a href="{{ route('projects.show', $project->id) }}" class="btn btn-primary btn-sm">View</a>
+    <!-- ✅ RESTORE BUTTONS -->
+    <div class="d-flex gap-2">
+        <a href="{{ route('projects.show', $project->id) }}" class="btn btn-primary btn-sm">View</a>
+
+        <a href="{{ route('tasks.create', $project->id) }}" class="btn btn-success btn-sm">
+            + Add Task
+        </a>
+    </div>
 </div>
 @endforeach
 @endsection

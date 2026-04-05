@@ -8,37 +8,19 @@
         <form method="POST" action="{{ route('register') }}">
             @csrf
 
-            <div class="mb-3">
-                <label>Name</label>
-                <input type="text" name="name" class="form-control" required>
-            </div>
+            <input type="text" name="name" class="form-control mb-2" placeholder="Name" required>
+            <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+            <input type="password" name="password" class="form-control mb-2" placeholder="Password" required>
+            <input type="password" name="password_confirmation" class="form-control mb-2" placeholder="Confirm Password" required>
 
-            <div class="mb-3">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control" required>
-            </div>
+            <select name="role" class="form-control mb-3" required>
+                <option value="admin">Admin</option>
+                <option value="pm">Project Manager</option>
+                <option value="dm">Digital Marketer</option>
+                <option value="client">Client</option>
+            </select>
 
-            <div class="mb-3">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" required>
-            </div>
-
-            <div class="mb-3">
-                <label>Confirm Password</label>
-                <input type="password" name="password_confirmation" class="form-control" required>
-            </div>
-
-            <div class="mb-3">
-                <label>Role</label>
-                <select name="role" class="form-control" required>
-                    <option value="admin">Admin</option>
-                    <option value="pm">Project Manager</option>
-                    <option value="dm">Digital Marketer</option>
-                    <option value="client">Client</option>
-                </select>
-            </div>
-
-            <button class="btn btn-primary w-100">Register</button>
+            <button class="btn btn-success w-100">Register</button>
         </form>
     </div>
 </div>

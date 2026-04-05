@@ -1,8 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PCMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -15,13 +13,13 @@
         @auth
             <span class="text-white me-3">{{ auth()->user()->name }}</span>
 
-            <form method="POST" action="{{ route('logout') }}" class="d-inline">
+            <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button class="btn btn-danger btn-sm">Logout</button>
             </form>
         @else
             <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Login</a>
-            <a href="{{ route('register') }}" class="btn btn-success btn-sm ms-2">Register</a>
+            <a href="{{ route('register') }}" class="btn btn-success btn-sm">Register</a>
         @endauth
     </div>
 </nav>

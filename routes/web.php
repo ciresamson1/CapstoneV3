@@ -1,37 +1,24 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+Route::middleware(['auth'])->group(function () {
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin', function () {
-        return 'Admin Only';
-    });
-});
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
-Route::middleware(['auth', 'role:pm'])->group(function () {
-    Route::get('/pm', function () {
-        return 'Project Manager Only';
-    });
-});
+    Route::resource('projects', ProjectController::class);
 
-Route::middleware(['auth', 'role:dm'])->group(function () {
-    Route::get('/dm', function () {
-        return 'Digital Marketer Only';
-    });
-});
+    Route::get('/projects/{project}/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
+    Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
 
-Route::middleware(['auth', 'role:client'])->group(function () {
-    Route::get('/client', function () {
-        return 'Client Only';
-    });
 });
 
 require __DIR__.'/auth.php';

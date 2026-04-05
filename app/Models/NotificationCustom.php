@@ -4,18 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Comment extends Model
+class NotificationCustom extends Model
 {
-    protected $fillable = [
-        'sub_task_id',
-        'user_id',
-        'message'
-    ];
+    protected $table = 'notifications_custom';
 
-    public function subTask()
-    {
-        return $this->belongsTo(SubTask::class);
-    }
+    protected $fillable = [
+        'user_id',
+        'type',
+        'related_id',
+        'message',
+        'is_read'
+    ];
 
     public function user()
     {

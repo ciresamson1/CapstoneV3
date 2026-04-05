@@ -9,7 +9,7 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::with('creator')->latest()->get();
+        $projects = Project::with('tasks')->get();
         return view('projects.index', compact('projects'));
     }
 
@@ -20,12 +20,6 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-        ]);
-
         Project::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -35,5 +29,11 @@ class ProjectController extends Controller
         ]);
 
         return redirect()->route('projects.index');
+    }
+
+    public function show($id)
+    {
+        $project = Project::with('tasks.subTasks')->findOrFail($id);
+        return view('projects.show', compact('project'));
     }
 }

@@ -21,8 +21,10 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function comments()
+   public function comments()
     {
-        return $this->hasMany(TaskComment::class)->latest();
+        return $this->hasMany(TaskComment::class)
+            ->whereNull('parent_id')
+            ->latest();
     }
 }

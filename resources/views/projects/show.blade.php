@@ -1,184 +1,373 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="container">
 
 <h2 class="mb-3">{{ $project->name }}</h2>
 
-<div class="card mb-4 p-3">
-    <h5>Project Progress</h5>
-    <div class="progress">
-        <div class="progress-bar bg-success" style="width: {{ $project->progress }}%">
-            {{ $project->progress }}%
-        </div>
-    </div>
+{{-- PROJECT PROGRESS --}}
+<div class="card mb-4">
+<div class="card-body">
+<h5>Project Progress</h5>
+
+@php
+$total = $project->tasks->count();
+$done = $project->tasks->where('progress',100)->count();
+$percent = $total ? round(($done/$total)*100) : 0;
+@endphp
+
+<div class="progress">
+<div class="progress-bar bg-success" style="width: {{ $percent }}%">
+{{ $percent }}%
+</div>
 </div>
 
-<div class="card mb-4 p-3">
-    <h4>Timeline</h4>
-    <div id="gantt" style="width:100%; height:300px;"></div>
 </div>
+</div>
+
+
+
+{{-- TIMELINE --}}
+<div class="card mb-4">
+<div class="card-body">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h5 class="mb-0">Timeline</h5>
+
+<a href="{{ route('tasks.create',$project->id) }}"
+class="btn btn-primary btn-sm">
++ Add Task
+</a>
+
+</div>
+
+<div id="gantt"></div>
+
+</div>
+</div>
+
+
+
+{{-- TASK CHECKLIST --}}
+<div class="card">
+<div class="card-body">
+
+<h5>Tasks Checklist</h5>
 
 @foreach($project->tasks as $task)
 
-<div class="card mb-3 p-3">
+<div class="border rounded p-3 mb-3">
 
-    <div class="d-flex align-items-center mb-2">
-        <input type="checkbox"
-               class="form-check-input me-2 task-checkbox"
-               data-task="{{ $task->id }}"
-               {{ $task->progress == 100 ? 'checked' : '' }}>
+<div class="form-check mb-2">
+<input class="form-check-input"
+type="checkbox"
+onchange="toggleTask({{ $task->id }})"
+{{ $task->progress == 100 ? 'checked' : '' }}>
 
-        <strong>{{ $task->title }}</strong>
-    </div>
+<label class="form-check-label fw-bold">
+{{ $task->title }}
+</label>
+</div>
 
-    <!-- COMMENTS -->
-    <div class="mt-3">
 
-        <div class="border rounded p-2 mb-2" style="max-height:200px;overflow-y:auto">
 
-            @foreach($task->comments as $comment)
+{{-- COMMENTS --}}
+@php
+$comments = $task->comments
+->whereNull('parent_id')
+->sortBy('created_at');
+@endphp
 
-                <div class="mb-2">
+<div id="task-comments-{{ $task->id }}">
 
-                    <strong>
-                        {{ $comment->user->name }}
-                        ({{ ucfirst($comment->user->role) }})
-                    </strong>
+@foreach($comments as $comment)
 
-                    <small class="text-muted">
-                        {{ $comment->created_at->diffForHumans() }}
-                    </small>
+<div class="border rounded p-2 mb-2">
 
-                    <div>{{ $comment->message }}</div>
+<strong>
+{{ $comment->user->name }}
+({{ ucfirst($comment->user->role) }})
+</strong>
 
-                  @if($comment->attachment)
-                        <div class="mt-2">
+<small class="text-muted">
+{{ $comment->created_at->diffForHumans() }}
+</small>
 
-                            @php
-                                $file = asset('storage/'.$comment->attachment);
-                                $ext = strtolower(pathinfo($comment->attachment, PATHINFO_EXTENSION));
-                                $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
-                            @endphp
+@if(!empty($comment->message))
+<div class="mt-1">{{ $comment->message }}</div>
+@endif
 
-                            {{-- IMAGE PREVIEW --}}
-                            @if($isImage)
-                                <div class="mb-2">
-                                    <a href="{{ $file }}" target="_blank">
-                                        <img src="{{ $file }}"
-                                            style="max-width:200px; border-radius:8px; border:1px solid #ddd;">
-                                    </a>
-                                </div>
-                            @endif
 
-                            {{-- FILE NAME --}}
-                            <div class="small text-muted mb-1">
-                                {{ basename($comment->attachment) }}
-                            </div>
+@if($comment->attachment)
+<img src="{{ asset('storage/'.$comment->attachment) }}"
+class="img-fluid mt-2"
+style="max-height:150px">
 
-                            {{-- DOWNLOAD BUTTON --}}
-                            <a href="{{ $file }}"
-                            download
-                            class="btn btn-sm btn-outline-primary">
-                                Download Attachment
-                            </a>
+<br>
 
-                        </div>
-                    @endif
-
-                </div>
-
-            @endforeach
-
-        </div>
-
-        <form method="POST"
-              action="{{ route('tasks.comments.store',$task->id) }}"
-              enctype="multipart/form-data">
-
-            @csrf
-
-            <div class="input-group">
-                <input type="text"
-                       name="message"
-                       class="form-control"
-                       placeholder="Write comment...">
-
-                <input type="file"
-                       name="file"
-                       class="form-control">
-
-                <button class="btn btn-primary">
-                    Send
-                </button>
-            </div>
-
-        </form>
-
-    </div>
+<a href="{{ route('task-comments.download',$comment->id) }}"
+class="btn btn-sm btn-outline-primary mt-1">
+Download Attachment
+</a>
+@endif
 
 </div>
 
 @endforeach
 
-<link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
-<script src="https://unpkg.com/frappe-gantt/dist/frappe-gantt.umd.js"></script>
+</div>
+
+
+
+{{-- ADD COMMENT --}}
+<form method="POST"
+action="{{ route('tasks.comments.store',$task->id) }}"
+enctype="multipart/form-data">
+
+@csrf
+
+<div class="input-group mt-2">
+
+<input type="text"
+name="message"
+class="form-control"
+placeholder="Write comment...">
+
+<input type="file"
+name="attachment"
+class="form-control">
+
+<button class="btn btn-primary">
+Send
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+@endforeach
+
+</div>
+</div>
+
+</div>
+
+
+
+<link rel="stylesheet"
+href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
 
 <style>
-.bar-green rect { fill: #28a745 !important; }
-.bar-yellow rect { fill: #ffc107 !important; }
-.bar-red rect { fill: #dc3545 !important; }
-.bar-grey rect { fill: #6c757d !important; }
+/* Override Frappe Gantt bar colors based on custom_class */
+.bar-wrapper.bar-green .bar {
+    background-color: #28a745 !important;
+    fill: #28a745 !important;
+}
+
+.bar-wrapper.bar-yellow .bar {
+    background-color: #ffc107 !important;
+    fill: #ffc107 !important;
+}
+
+.bar-wrapper.bar-red .bar {
+    background-color: #dc3545 !important;
+    fill: #dc3545 !important;
+}
+
+.bar-wrapper.bar-grey .bar {
+    background-color: #6c757d !important;
+    fill: #6c757d !important;
+}
+
+/* Alternative selectors for different Gantt versions */
+svg .bar-green .bar {
+    fill: #28a745 !important;
+}
+
+svg .bar-yellow .bar {
+    fill: #ffc107 !important;
+}
+
+svg .bar-red .bar {
+    fill: #dc3545 !important;
+}
+
+svg .bar-grey .bar {
+    fill: #6c757d !important;
+}
 </style>
 
+<script src="https://unpkg.com/frappe-gantt/dist/frappe-gantt.umd.js"></script>
+
 <script>
-window.onload = function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-    const today = new Date();
+@php
+    $commentIdsByTask = [];
+    $latestCommentTimestamp = null;
 
-    const tasks = [
-        @foreach($project->tasks as $task)
-        {
-            id: 'task-{{ $task->id }}',
-            name: '{{ $task->title }}',
-            start: '{{ $task->start_date }}',
-            end: '{{ $task->end_date }}',
-            progress: {{ $task->progress }},
-            custom_class: (function() {
+    foreach ($project->tasks as $task) {
+        $comments = $task->comments->whereNull('parent_id')->sortBy('created_at');
+        $commentIdsByTask[$task->id] = $comments->pluck('id')->all();
 
-                let end = new Date('{{ $task->end_date }}');
-                let progress = {{ $task->progress }};
-                let diff = (end - today) / (1000*60*60*24);
-
-                if (progress == 100) return 'bar-green';
-                if (end < today && progress < 100) return 'bar-red';
-                if (diff <= 2 && diff >= 0) return 'bar-yellow';
-
-                return 'bar-grey';
-            })()
-        },
-        @endforeach
-    ];
-
-    if (tasks.length > 0) {
-        const gantt = new Gantt("#gantt", tasks, { view_mode: 'Day' });
-
-        document.querySelectorAll('#gantt svg').forEach(svg => {
-            svg.style.pointerEvents = 'none';
-        });
+        foreach ($comments as $comment) {
+            if (! $latestCommentTimestamp || $comment->created_at > $latestCommentTimestamp) {
+                $latestCommentTimestamp = $comment->created_at;
+            }
+        }
     }
+@endphp
 
-    document.querySelectorAll('.task-checkbox').forEach(cb => {
-        cb.addEventListener('change', function() {
-            fetch(`/tasks/${this.dataset.task}/toggle`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            }).then(() => location.reload());
-        });
-    });
+let knownCommentIds = {!! json_encode($commentIdsByTask) !!};
+let lastCommentTimestamp = '{{ $latestCommentTimestamp ? $latestCommentTimestamp->toISOString() : now()->toISOString() }}';
 
+@php
+    use Carbon\Carbon;
+    $today = Carbon::today();
+@endphp
+
+let tasks = [
+@foreach($project->tasks as $task)
+@php
+    $endDate = Carbon::parse($task->end_date);
+    $daysUntilDeadline = $today->diffInDays($endDate, false);
+    
+    if ($task->progress == 100) {
+        $barClass = 'bar-green';
+    } elseif ($endDate < $today) {
+        $barClass = 'bar-red';
+    } elseif ($task->progress < 100 && $daysUntilDeadline <= 3 && $daysUntilDeadline >= 0) {
+        $barClass = 'bar-yellow';
+    } else {
+        $barClass = 'bar-grey';
+    }
+@endphp
+{
+id: 'task-{{ $task->id }}',
+name: '{{ $task->title }}',
+start: '{{ $task->start_date }}',
+end: '{{ $task->end_date }}',
+progress: {{ $task->progress }},
+custom_class: "{{ $barClass }}"
+},
+@endforeach
+];
+
+const gantt = new Gantt("#gantt", tasks, {
+view_mode: 'Day',
+readonly: true
+});
+
+// Apply colors to bars based on custom_class
+const colorMap = {
+    'bar-green': '#28a745',
+    'bar-yellow': '#ffc107',
+    'bar-red': '#dc3545',
+    'bar-grey': '#6c757d'
 };
+
+setTimeout(() => {
+    // Target all bar groups/wrappers in the SVG
+    const barWrappers = document.querySelectorAll('[class*="bar-green"], [class*="bar-yellow"], [class*="bar-red"], [class*="bar-grey"]');
+    
+    barWrappers.forEach((wrapper) => {
+        const classNames = wrapper.className.baseVal || wrapper.className;
+        let barColor = null;
+        
+        if (classNames.includes('bar-green')) {
+            barColor = '#28a745';
+        } else if (classNames.includes('bar-yellow')) {
+            barColor = '#ffc107';
+        } else if (classNames.includes('bar-red')) {
+            barColor = '#dc3545';
+        } else if (classNames.includes('bar-grey')) {
+            barColor = '#6c757d';
+        }
+        
+        if (barColor) {
+            const barElement = wrapper.querySelector('.bar') || wrapper.querySelector('rect');
+            if (barElement) {
+                barElement.setAttribute('fill', barColor);
+                barElement.style.fill = barColor;
+            }
+        }
+    });
+}, 100);
+
+const appendComment = (c) => {
+    let html = `
+<div class="border rounded p-2 mb-2">
+<strong>${c.user_name} (${c.user_role})</strong>
+<small class="text-muted"> ${c.created_at}</small>
+${c.message ? `<div class="mt-1">${c.message}</div>` : ''}
+${c.attachment ? `
+<img src="/storage/${c.attachment}" class="img-fluid mt-2" style="max-height:150px">
+<br>
+<a href="/task-comments/${c.id}/download" class="btn btn-sm btn-outline-primary mt-1">
+Download Attachment
+</a>
+` : ''}
+</div>
+`;
+
+    const container = document.getElementById('task-comments-' + c.task_id);
+    if (container) {
+        container.insertAdjacentHTML('beforeend', html);
+    }
+};
+
+const pollComments = () => {
+    fetch("{{ route('projects.comments.poll', $project->id) }}?after=" + encodeURIComponent(lastCommentTimestamp))
+        .then((res) => res.json())
+        .then((data) => {
+            if (!Array.isArray(data)) {
+                return;
+            }
+
+            data.forEach((c) => {
+                knownCommentIds[c.task_id] = knownCommentIds[c.task_id] ?? [];
+
+                if (!knownCommentIds[c.task_id].includes(c.id)) {
+                    knownCommentIds[c.task_id].push(c.id);
+                    appendComment(c);
+                    lastCommentTimestamp = c.created_at;
+                }
+            });
+        });
+};
+
+setInterval(pollComments, 5000);
+
+const projectChannel = window.Echo.channel('project.{{ $project->id }}');
+
+const handleCommentCreated = (e) => {
+    let c = e.comment;
+    knownCommentIds[c.task_id] = knownCommentIds[c.task_id] ?? [];
+
+    if (!knownCommentIds[c.task_id].includes(c.id)) {
+        knownCommentIds[c.task_id].push(c.id);
+        appendComment(c);
+        lastCommentTimestamp = c.created_at;
+    }
+};
+
+projectChannel.listen('task.comment.created', handleCommentCreated);
+projectChannel.listen('.task.comment.created', handleCommentCreated);
+
+});
+
+function toggleTask(id)
+{
+fetch(`/tasks/${id}/toggle`,{
+method:"POST",
+headers:{
+"X-CSRF-TOKEN":"{{ csrf_token() }}",
+"Content-Type":"application/json"
+}
+}).then(()=>location.reload());
+}
 </script>
 
 @endsection

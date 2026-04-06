@@ -30,7 +30,8 @@ class ProjectController extends Controller
             'description' => request('description'),
             'start_date' => now(),
             'end_date' => now()->addDays(30),
-            'status' => 'active'
+            'status' => 'active',
+            'created_by' => auth()->id() // ✅ FIX
         ]);
 
         return redirect()->route('projects.index');

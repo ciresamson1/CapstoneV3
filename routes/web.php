@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
-use App\Http\Controllers\SubTaskController;
+use App\Http\Controllers\TaskCommentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,9 +20,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
     Route::post('/projects/{project}/tasks', [TaskController::class, 'store'])->name('tasks.store');
 
-    Route::post('/tasks/{id}/update-dates', [TaskController::class, 'updateDates'])->name('tasks.update-dates');
-    Route::post('/tasks/{id}/toggle', [\App\Http\Controllers\TaskController::class, 'toggle']);
-    Route::post('/subtasks/{id}/toggle', [SubTaskController::class, 'toggle'])->name('subtasks.toggle');
+    Route::post('/tasks/{id}/toggle', [TaskController::class, 'toggle']);
+
+    Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])
+        ->name('tasks.comments.store');
+
 });
 
 require __DIR__.'/auth.php';

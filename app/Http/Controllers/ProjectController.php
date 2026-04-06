@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
     public function index()
     {
         $projects = Project::with('tasks')->get();
+
         return view('projects.index', compact('projects'));
     }
 
@@ -18,14 +18,19 @@ class ProjectController extends Controller
         return view('projects.create');
     }
 
-    public function store(Request $request)
+    public function store()
     {
+        request()->validate([
+            'name' => 'required',
+            'description' => 'required'
+        ]);
+
         Project::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'created_by' => auth()->id(),
+            'name' => request('name'),
+            'description' => request('description'),
+            'start_date' => now(),
+            'end_date' => now()->addDays(30),
+            'status' => 'active'
         ]);
 
         return redirect()->route('projects.index');
@@ -33,7 +38,10 @@ class ProjectController extends Controller
 
     public function show($id)
     {
-        $project = Project::with('tasks.subTasks')->findOrFail($id);
+        $project = Project::with([
+            'tasks.comments.user'
+        ])->findOrFail($id);
+
         return view('projects.show', compact('project'));
     }
 }

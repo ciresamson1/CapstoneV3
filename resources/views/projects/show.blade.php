@@ -4,7 +4,6 @@
 
 <h2 class="mb-3">{{ $project->name }}</h2>
 
-<!-- PROJECT PROGRESS -->
 <div class="card mb-4 p-3">
     <h5>Project Progress</h5>
     <div class="progress">
@@ -14,33 +13,116 @@
     </div>
 </div>
 
-<!-- GANTT -->
 <div class="card mb-4 p-3">
     <h4>Timeline</h4>
     <div id="gantt" style="width:100%; height:300px;"></div>
 </div>
 
-<!-- TASK CHECKLIST -->
-<div class="card p-3">
-    <h4 class="mb-3">Tasks Checklist</h4>
+@foreach($project->tasks as $task)
 
-    @foreach($project->tasks as $task)
-        <div class="d-flex align-items-center mb-2 border-bottom pb-2">
-            <input type="checkbox"
-                   class="form-check-input me-2 task-checkbox"
-                   data-task="{{ $task->id }}"
-                   {{ $task->progress == 100 ? 'checked' : '' }}>
+<div class="card mb-3 p-3">
 
-            <strong>{{ $task->title }}</strong>
+    <div class="d-flex align-items-center mb-2">
+        <input type="checkbox"
+               class="form-check-input me-2 task-checkbox"
+               data-task="{{ $task->id }}"
+               {{ $task->progress == 100 ? 'checked' : '' }}>
+
+        <strong>{{ $task->title }}</strong>
+    </div>
+
+    <!-- COMMENTS -->
+    <div class="mt-3">
+
+        <div class="border rounded p-2 mb-2" style="max-height:200px;overflow-y:auto">
+
+            @foreach($task->comments as $comment)
+
+                <div class="mb-2">
+
+                    <strong>
+                        {{ $comment->user->name }}
+                        ({{ ucfirst($comment->user->role) }})
+                    </strong>
+
+                    <small class="text-muted">
+                        {{ $comment->created_at->diffForHumans() }}
+                    </small>
+
+                    <div>{{ $comment->message }}</div>
+
+                  @if($comment->attachment)
+                        <div class="mt-2">
+
+                            @php
+                                $file = asset('storage/'.$comment->attachment);
+                                $ext = strtolower(pathinfo($comment->attachment, PATHINFO_EXTENSION));
+                                $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
+                            @endphp
+
+                            {{-- IMAGE PREVIEW --}}
+                            @if($isImage)
+                                <div class="mb-2">
+                                    <a href="{{ $file }}" target="_blank">
+                                        <img src="{{ $file }}"
+                                            style="max-width:200px; border-radius:8px; border:1px solid #ddd;">
+                                    </a>
+                                </div>
+                            @endif
+
+                            {{-- FILE NAME --}}
+                            <div class="small text-muted mb-1">
+                                {{ basename($comment->attachment) }}
+                            </div>
+
+                            {{-- DOWNLOAD BUTTON --}}
+                            <a href="{{ $file }}"
+                            download
+                            class="btn btn-sm btn-outline-primary">
+                                Download Attachment
+                            </a>
+
+                        </div>
+                    @endif
+
+                </div>
+
+            @endforeach
+
         </div>
-    @endforeach
+
+        <form method="POST"
+              action="{{ route('tasks.comments.store',$task->id) }}"
+              enctype="multipart/form-data">
+
+            @csrf
+
+            <div class="input-group">
+                <input type="text"
+                       name="message"
+                       class="form-control"
+                       placeholder="Write comment...">
+
+                <input type="file"
+                       name="file"
+                       class="form-control">
+
+                <button class="btn btn-primary">
+                    Send
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
 
-<!-- GANTT LIB -->
+@endforeach
+
 <link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
 <script src="https://unpkg.com/frappe-gantt/dist/frappe-gantt.umd.js"></script>
 
-<!-- COLORS -->
 <style>
 .bar-green rect { fill: #28a745 !important; }
 .bar-yellow rect { fill: #ffc107 !important; }
@@ -52,7 +134,6 @@
 window.onload = function () {
 
     const today = new Date();
-    const todayStr = today.toISOString().slice(0,10);
 
     const tasks = [
         @foreach($project->tasks as $task)
@@ -62,48 +143,30 @@ window.onload = function () {
             start: '{{ $task->start_date }}',
             end: '{{ $task->end_date }}',
             progress: {{ $task->progress }},
-
             custom_class: (function() {
 
                 let end = new Date('{{ $task->end_date }}');
                 let progress = {{ $task->progress }};
+                let diff = (end - today) / (1000*60*60*24);
 
-                // ✅ GREEN = completed BEFORE deadline
-                if (progress == 100 && end >= today) {
-                    return 'bar-green';
-                }
+                if (progress == 100) return 'bar-green';
+                if (end < today && progress < 100) return 'bar-red';
+                if (diff <= 2 && diff >= 0) return 'bar-yellow';
 
-                // ✅ RED = overdue (past deadline and not completed)
-                if (end < today && progress < 100) {
-                    return 'bar-red';
-                }
-
-                // ✅ YELLOW = 2 days before deadline
-                let diff = (end - today) / (1000 * 60 * 60 * 24);
-                if (diff <= 2 && diff >= 0 && progress < 100) {
-                    return 'bar-yellow';
-                }
-
-                // ✅ GREY = remaining / normal OR overdue excess
                 return 'bar-grey';
-
             })()
         },
         @endforeach
     ];
 
     if (tasks.length > 0) {
-        const gantt = new Gantt("#gantt", tasks, {
-            view_mode: 'Day'
-        });
+        const gantt = new Gantt("#gantt", tasks, { view_mode: 'Day' });
 
-        // ❌ HARD DISABLE DRAG (FORCE)
         document.querySelectorAll('#gantt svg').forEach(svg => {
             svg.style.pointerEvents = 'none';
         });
     }
 
-    // CHECKBOX
     document.querySelectorAll('.task-checkbox').forEach(cb => {
         cb.addEventListener('change', function() {
             fetch(`/tasks/${this.dataset.task}/toggle`, {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Project;
 
 class ProjectController extends Controller
@@ -36,6 +37,8 @@ class ProjectController extends Controller
             'status' => 'active',
             'created_by' => auth()->id() // ✅ FIX
         ]);
+
+        ActivityLog::record('created_project', 'Created project "' . request('name') . '"');
 
         return redirect()->route('projects.index');
     }

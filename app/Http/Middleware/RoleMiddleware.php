@@ -13,8 +13,15 @@ class RoleMiddleware
             return redirect('/login');
         }
 
-        if (!in_array(auth()->user()->role, $roles)) {
-            abort(403, 'Unauthorized');
+        $userRole = strtolower((string) auth()->user()->role);
+        $allowedRoles = array_map(fn ($role) => strtolower((string) $role), $roles);
+
+        if (!in_array($userRole, $allowedRoles, true)) {
+            if ($request->expectsJson()) {
+                abort(403, 'Unauthorized');
+            }
+
+            return redirect()->route('dashboard')->with('status', 'You do not have access to the admin dashboard.');
         }
 
         return $next($request);

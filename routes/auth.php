@@ -13,7 +13,11 @@ Route::post('/login', function (Request $request) {
 
     if (Auth::attempt($credentials)) {
         $request->session()->regenerate();
-        return redirect()->route('dashboard');
+
+        $user = Auth::user();
+        $defaultRoute = $user && $user->role === 'admin' ? 'admin.dashboard' : 'dashboard';
+
+        return redirect()->intended(route($defaultRoute));
     }
 
     return back()->withErrors([

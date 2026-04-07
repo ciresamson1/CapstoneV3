@@ -30,21 +30,23 @@
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
                         Projects
                     </a>
-                    <a href="{{ route('projects.create') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">➕</span>
-                        Create Project
+                    <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
+                        Tasks
+                    </a>
+                    <a href="{{ route('admin.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
+                        Activity Log
+                    </a>
+                    <a href="{{ route('admin.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
+                        Reports
+                    </a>
+                    <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">👥</span>
+                        Manage Users
                     </a>
                 </nav>
-            </div>
-
-            <div class="mt-10 rounded-3xl border border-slate-800 bg-slate-900 p-5">
-                <div class="mb-3 text-sm uppercase tracking-[0.24em] text-slate-500">Quick Actions</div>
-                <div class="space-y-3 text-sm text-slate-300">
-                    <a href="{{ route('projects.create') }}" class="block rounded-2xl bg-emerald-500 px-3 py-2 text-center font-semibold text-slate-950 hover:bg-emerald-400">Create Project</a>
-                    <a href="{{ route('register') }}" class="block rounded-2xl border border-slate-800 px-3 py-2 text-center hover:bg-slate-800">Manage Users</a>
-                    <a href="#" class="block rounded-2xl border border-slate-800 px-3 py-2 text-center hover:bg-slate-800">Assign Roles</a>
-                    <a href="#" class="block rounded-2xl border border-slate-800 px-3 py-2 text-center hover:bg-slate-800">View Reports</a>
-                </div>
             </div>
         </aside>
 

@@ -7,6 +7,7 @@ use App\Models\TaskComment;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use App\Events\TaskCommentCreated;
+use App\Models\ActivityLog;
 use Carbon\Carbon;
 
 class TaskCommentController extends Controller
@@ -37,6 +38,8 @@ class TaskCommentController extends Controller
         ]);
 
         broadcast(new TaskCommentCreated($comment))->toOthers();
+
+        ActivityLog::record('posted_comment', 'Posted a comment on task "' . $task->title . '"', $task);
 
         return back();
     }

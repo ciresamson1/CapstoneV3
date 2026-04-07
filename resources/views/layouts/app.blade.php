@@ -12,6 +12,7 @@
 </head>
 <body>
 
+@unless(request()->routeIs('dashboard'))
 <nav class="navbar navbar-dark px-4" style="background:#6200ea;">
 <a href="/" class="navbar-brand">PCMS</a>
 
@@ -28,6 +29,7 @@
 
 </div>
 </nav>
+@endunless
 
 <div class="container mt-4">
 @yield('content')

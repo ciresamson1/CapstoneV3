@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskCommentController;
-use App\Http\Controllers\CommentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -12,9 +13,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     /*
     |--------------------------------------------------------------------------
@@ -62,20 +61,6 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | General Comments (old system)
-    |--------------------------------------------------------------------------
-    */
-
-    Route::post('/comments',
-        [CommentController::class, 'store']
-    )->name('comments.store');
-
-    Route::get('/comments/{id}/download',
-        [CommentController::class,'download']
-    )->name('comments.download');
-
-    /*
-    |--------------------------------------------------------------------------
     | Notifications
     |--------------------------------------------------------------------------
     */
@@ -83,6 +68,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/read', function () {
         auth()->user()->unreadNotifications->markAsRead();
         return back();
+    });
+
+    Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/metrics', [AdminDashboardController::class, 'metrics'])->name('dashboard.metrics');
+        Route::get('/dashboard/chart-data', [AdminDashboardController::class, 'chartData'])->name('dashboard.chart-data');
     });
 
 });

@@ -8,7 +8,10 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::with('tasks')->get();
+        $projects = Project::with(['tasks', 'creator'])
+            ->withCount('tasks')
+            ->orderBy('name')
+            ->get();
 
         return view('projects.index', compact('projects'));
     }

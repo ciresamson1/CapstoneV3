@@ -1,0 +1,508 @@
+@extends('layouts.admin')
+
+@section('content')
+<div class="min-h-screen overflow-x-hidden bg-slate-100">
+    <div class="flex min-h-screen flex-col xl:flex-row">
+        <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
+            <div class="mb-10">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-950 font-bold">PC</div>
+                    <div>
+                        <h1 class="text-lg font-semibold">PCMS Admin</h1>
+                        <p class="text-sm text-slate-400">Project Coordination</p>
+                    </div>
+                </div>
+                <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                    <div class="text-sm text-slate-400">Signed in as</div>
+                    <div class="mt-2 text-base font-semibold text-white">{{ auth()->user()->name }}</div>
+                    <div class="text-sm text-slate-500">{{ auth()->user()->role }}</div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
+                <nav class="space-y-2">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-300' }}">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
+                        Dashboard
+                    </a>
+                    <a href="{{ route('projects.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
+                        Projects
+                    </a>
+                    <a href="{{ route('projects.create') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">➕</span>
+                        Create Project
+                    </a>
+                </nav>
+            </div>
+
+            <div class="mt-10 rounded-3xl border border-slate-800 bg-slate-900 p-5">
+                <div class="mb-3 text-sm uppercase tracking-[0.24em] text-slate-500">Quick Actions</div>
+                <div class="space-y-3 text-sm text-slate-300">
+                    <a href="{{ route('projects.create') }}" class="block rounded-2xl bg-emerald-500 px-3 py-2 text-center font-semibold text-slate-950 hover:bg-emerald-400">Create Project</a>
+                    <a href="{{ route('register') }}" class="block rounded-2xl border border-slate-800 px-3 py-2 text-center hover:bg-slate-800">Manage Users</a>
+                    <a href="#" class="block rounded-2xl border border-slate-800 px-3 py-2 text-center hover:bg-slate-800">Assign Roles</a>
+                    <a href="#" class="block rounded-2xl border border-slate-800 px-3 py-2 text-center hover:bg-slate-800">View Reports</a>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 min-w-0 p-6 xl:p-8">
+            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-2xl font-semibold text-slate-900">Admin Dashboard</h2>
+                    <p class="mt-2 text-sm text-slate-500">Transforming raw project data into actionable insights for decision-making and risk monitoring.</p>
+                </div>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <form method="POST" action="{{ route('logout') }}" class="sm:mt-0">
+                        @csrf
+                        <button type="submit" class="rounded-3xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">Logout</button>
+                    </form>
+                </div>
+            </div>
+
+            <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach($kpiCards as $card)
+                <a href="{{ $card['url'] }}" class="group block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{{ $card['title'] }}</p>
+                            <p class="mt-4 text-3xl font-bold text-slate-900" data-kpi="{{ $card['title'] }}">{{ $card['value'] }}</p>
+                        </div>
+                        <div class="flex h-12 w-12 items-center justify-center rounded-3xl text-lg" style="background-color: {{ $card['color'] === 'red' ? 'rgba(254, 226, 226, 0.65)' : ($card['color'] === 'yellow' ? 'rgba(254, 240, 138, 0.65)' : ($card['color'] === 'green' ? 'rgba(220, 252, 231, 0.65)' : 'rgba(191, 219, 254, 0.65)')) }}; color: {{ $card['color'] === 'red' ? '#dc2626' : ($card['color'] === 'yellow' ? '#f59e0b' : ($card['color'] === 'green' ? '#16a34a' : '#0284c7')) }};">
+                            @if($card['color'] === 'red') ⚠️ @elseif($card['color'] === 'yellow') ⏳ @elseif($card['color'] === 'green') ✅ @else 💬 @endif
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-slate-500">{{ $card['note'] }}</p>
+                </a>
+                @endforeach
+            </section>
+
+            <section class="mt-6 grid gap-6 xl:grid-cols-[0.75fr_0.5fr]">
+                <div class="rounded-3xl bg-white p-6 shadow-sm">
+                    <div class="mb-6 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">Smart Alerts</h3>
+                            <p class="text-sm text-slate-500">Critical updates and risk signals sorted by priority.</p>
+                        </div>
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">Real-time</span>
+                    </div>
+                    <div class="space-y-4">
+                        @foreach($alerts as $alert)
+                            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-900">{{ $alert['headline'] }}</p>
+                                        <p class="mt-2 text-sm text-slate-600">{{ $alert['details'] }}</p>
+                                    </div>
+                                    <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 {{ $alert['color'] === 'red' ? 'bg-rose-100 text-rose-700' : ($alert['color'] === 'yellow' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700') }}">{{ $alert['label'] }}</span>
+                                </div>
+                                @if(isset($alert['items']) && is_iterable($alert['items']))
+                                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                        @foreach($alert['items'] as $item)
+                                            <div class="rounded-3xl bg-white p-3 text-sm text-slate-600 shadow-sm">
+                                                <p class="font-semibold text-slate-900">{{ $item['project'] }}</p>
+                                                <p>{{ $item['count'] }} overdue task{{ $item['count'] === 1 ? '' : 's' }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="rounded-3xl bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Team Workload Summary</p>
+                                <h3 class="mt-2 text-xl font-semibold text-slate-900">Fast risk monitoring</h3>
+                            </div>
+                            <span class="rounded-3xl bg-slate-100 px-3 py-2 text-sm text-slate-700">Balance</span>
+                        </div>
+                        <p class="mt-4 text-sm text-slate-600">This panel helps you keep a pulse on team capacity, task pressure, and workload balance across projects.</p>
+                    </div>
+                    <div class="rounded-3xl bg-white p-6 shadow-sm">
+                        <h3 class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Client Activity</h3>
+                        <div class="mt-5 space-y-4">
+                            <p class="text-7xl font-bold text-slate-900">{{ $clientActivity['pendingApprovals'] }}</p>
+                            <p class="text-sm text-slate-600">Pending approvals requiring client confirmation.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-6 py-5">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">Project Health</h3>
+                            <p class="text-sm text-slate-500">Live performance overview for active and at-risk projects.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-700">On Track</span>
+                            <span class="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700">At Risk</span>
+                            <span class="rounded-full bg-rose-100 px-3 py-1 text-sm text-rose-700">Delayed</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto px-6 py-6">
+                    <table class="min-w-full text-left text-sm text-slate-600">
+                        <thead>
+                            <tr>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Project Name</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Progress</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Status</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Risk</th>
+                                <th class="pb-4 font-semibold text-slate-900">Team Load</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @if(is_iterable($projectHealth))
+                                @foreach($projectHealth as $project)
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-5 pr-8 font-medium text-slate-900">{{ $project['name'] }}</td>
+                                        <td class="py-5 pr-8">
+                                            <div class="w-full rounded-full bg-slate-100">
+                                                <div class="rounded-full bg-slate-900 text-[11px] text-white" style="width: {{ $project['progress'] }}%; padding: .45rem .6rem;">{{ $project['progress'] }}%</div>
+                                            </div>
+                                        </td>
+                                        <td class="py-5 pr-8 text-slate-700">
+                                            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $project['status'] === 'On Track' ? 'bg-emerald-100 text-emerald-700' : ($project['status'] === 'At Risk' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">{{ $project['status'] }}</span>
+                                        </td>
+                                        <td class="py-5 pr-8 text-slate-700">
+                                            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $project['risk'] === 'Low' ? 'bg-emerald-100 text-emerald-700' : ($project['risk'] === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">{{ $project['risk'] }}</span>
+                                        </td>
+                                        <td class="py-5 text-slate-700">{{ $project['load'] }}</td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="5" class="py-6 text-center text-sm text-slate-500">Project health data is unavailable.</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="mt-6 grid gap-6 xl:grid-cols-[0.75fr_0.5fr]">
+                <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-w-0">
+                    <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">Interactive Gantt Timeline</h3>
+                            <p class="text-sm text-slate-500">Live timeline view of task windows, deadlines and project ownership.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <select id="projectFilter" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <option value="all">All Projects</option>
+                                @foreach(collect($ganttData)->pluck('project')->unique() as $projectName)
+                                    <option value="{{ $projectName }}">{{ $projectName }}</option>
+                                @endforeach
+                            </select>
+                            <select id="userFilter" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <option value="all">All Users</option>
+                                @foreach(collect($ganttData)->pluck('assigned_to')->unique() as $userName)
+                                    <option value="{{ $userName }}">{{ $userName }}</option>
+                                @endforeach
+                            </select>
+                            <select id="zoomLevel" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <option value="1">Day</option>
+                                <option value="7">Week</option>
+                                <option value="30">Month</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="mb-4">
+                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Gantt Timeline</p>
+                            <p id="ganttProjectTitle" class="mt-3 text-lg font-semibold text-slate-900">All Projects</p>
+                            <p id="ganttProjectDescription" class="mt-2 text-sm text-slate-500">Timeline across all projects.</p>
+                        </div>
+                        <div class="h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
+                            <canvas id="ganttChart" class="h-full w-full block" style="min-height:420px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 min-w-0">
+                    <div class="rounded-3xl bg-white p-6 shadow-sm min-w-0">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900">Team Performance</h3>
+                                <p class="text-sm text-slate-500">Completed and delayed tasks per user.</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 h-[320px] min-w-0">
+                            <canvas id="teamPerformanceChart" class="h-full w-full"></canvas>
+                        </div>
+                    </div>
+                    <div class="rounded-3xl bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900">Client Activity</h3>
+                                <p class="text-sm text-slate-500">Pending approvals and recent feedback.</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 space-y-4">
+                            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-500">Pending approvals</p>
+                                    <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">{{ $clientActivity['pendingApprovals'] }}</span>
+                                </div>
+                                <p class="mt-3 text-sm text-slate-600">Currently awaiting client review and confirmation.</p>
+                            </div>
+                            <div class="rounded-3xl bg-slate-50 p-4">
+                                <h4 class="text-sm font-semibold text-slate-900">Recent client comments</h4>
+                                <div class="mt-4 space-y-3">
+                                @if(isset($clientActivity['recentComments']) && is_iterable($clientActivity['recentComments']))
+                                    @forelse($clientActivity['recentComments'] as $comment)
+                                        <div class="rounded-3xl border border-slate-200 bg-white p-4">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p class="font-semibold text-slate-900">{{ $comment['user'] }}</p>
+                                                    <p class="text-sm text-slate-500">{{ $comment['project'] }}</p>
+                                                </div>
+                                                <span class="text-xs text-slate-400">{{ $comment['time'] }}</span>
+                                            </div>
+                                            <p class="mt-3 text-sm text-slate-600">{{ $comment['message'] }}</p>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-slate-500">No recent client comments available.</p>
+                                    @endforelse
+                                @else
+                                    <p class="text-sm text-slate-500">No recent client comments available.</p>
+                                @endif
+                            </div>
+                            </div>
+                            <div class="rounded-3xl bg-slate-50 p-4">
+                                <h4 class="text-sm font-semibold text-slate-900">Revision cycles</h4>
+                                <div class="mt-3 space-y-2">
+                                    @foreach($clientActivity['revisionCycles'] as $cycle)
+                                        <div class="flex items-center justify-between rounded-3xl bg-white p-3 text-sm text-slate-600">
+                                            <span>{{ $cycle['project'] }}</span>
+                                            <span class="font-semibold text-slate-900">{{ $cycle['cycles'] }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ganttData = @json($ganttData);
+    const teamPerformance = @json($teamPerformance);
+
+    const ganttCtx = document.getElementById('ganttChart').getContext('2d');
+    const teamCtx = document.getElementById('teamPerformanceChart').getContext('2d');
+
+    let ganttChart;
+    let teamChart;
+
+    function formatDateOffset(offset) {
+        const date = new Date();
+        date.setDate(date.getDate() + Number(offset));
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    function getZoomLabel(zoomDays) {
+        if (zoomDays === 1) return 'Daily timeline';
+        if (zoomDays === 7) return 'Weekly timeline';
+        return 'Monthly timeline';
+    }
+
+    function createGanttChart(data, zoomDays) {
+        const filtered = data;
+        const maxSpan = Math.max(...filtered.map(item => item.startOffset + item.duration), 7);
+        const stepSize = zoomDays;
+
+        const offsetDataset = {
+            label: 'Start offset',
+            backgroundColor: 'rgba(203,213,225,0.3)',
+            stack: 'combined',
+            data: filtered.map(item => item.startOffset),
+            borderRadius: 8,
+            borderSkipped: false,
+            maxBarThickness: 28,
+        };
+
+        const durationDataset = {
+            label: 'Duration',
+            backgroundColor: filtered.map(item => item.color),
+            stack: 'combined',
+            data: filtered.map(item => item.duration),
+            borderRadius: 8,
+            borderSkipped: false,
+            maxBarThickness: 28,
+        };
+
+        if (ganttChart) {
+            ganttChart.destroy();
+        }
+
+        ganttChart = new Chart(ganttCtx, {
+            type: 'bar',
+            data: {
+                labels: filtered.map(item => item.title),
+                datasets: [offsetDataset, durationDataset],
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        stacked: true,
+                        min: 0,
+                        max: Math.max(maxSpan, 7),
+                        ticks: {
+                            stepSize: stepSize,
+                            callback: function(value) {
+                                return formatDateOffset(value);
+                            },
+                            color: '#475569',
+                        },
+                        title: {
+                            display: true,
+                            text: getZoomLabel(zoomDays),
+                            color: '#475569',
+                        },
+                        grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: { color: '#475569' },
+                        grid: { display: false },
+                    },
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label === 'Start offset') {
+                                    return 'Starts in ' + context.formattedValue + ' days';
+                                }
+                                return 'Duration: ' + context.formattedValue + ' days';
+                            }
+                        }
+                    },
+                    legend: { display: false },
+                }
+            }
+        });
+    }
+
+    function createTeamChart() {
+        if (teamChart) {
+            teamChart.destroy();
+        }
+
+        teamChart = new Chart(teamCtx, {
+            type: 'bar',
+            data: {
+                labels: teamPerformance.labels,
+                datasets: [
+                    {
+                        label: 'Completed Tasks',
+                        data: teamPerformance.completed,
+                        backgroundColor: '#22c55e',
+                        borderRadius: 12,
+                    },
+                    {
+                        label: 'Delayed Tasks',
+                        data: teamPerformance.delayed,
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 12,
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    const ganttProjectTitleEl = document.getElementById('ganttProjectTitle');
+    const ganttProjectDescriptionEl = document.getElementById('ganttProjectDescription');
+
+    function getUniqueGanttProject() {
+        const unique = Object.values(ganttData.reduce((acc, item) => {
+            if (!acc[item.project]) {
+                acc[item.project] = item;
+            }
+            return acc;
+        }, {}));
+        return unique.length === 1 ? unique[0] : null;
+    }
+
+    function updateGanttProjectInfo(selectedProject) {
+        const projectItem = selectedProject === 'all'
+            ? getUniqueGanttProject()
+            : ganttData.find(item => item.project === selectedProject);
+
+        if (!projectItem) {
+            ganttProjectTitleEl.textContent = 'All Projects';
+            ganttProjectDescriptionEl.textContent = 'Timeline across all projects.';
+            return;
+        }
+
+        ganttProjectTitleEl.textContent = projectItem.project;
+        ganttProjectDescriptionEl.textContent = projectItem.project_description || 'Timeline for the selected project.';
+    }
+
+    function filterGantt() {
+        const project = document.getElementById('projectFilter').value;
+        const user = document.getElementById('userFilter').value;
+        const zoom = parseInt(document.getElementById('zoomLevel').value, 10);
+
+        const filtered = ganttData.filter(item => {
+            const projectMatch = project === 'all' || item.project === project;
+            const userMatch = user === 'all' || item.assigned_to === user;
+            return projectMatch && userMatch;
+        });
+
+        updateGanttProjectInfo(project);
+        createGanttChart(filtered, zoom);
+    }
+
+    function refreshKpiCards() {
+        fetch('{{ route('admin.dashboard.metrics') }}')
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('[data-kpi]').forEach(el => {
+                    const key = el.dataset.kpi;
+                    const card = data.kpiCards.find(item => item.title === key);
+                    if (card) {
+                        el.innerText = card.value;
+                    }
+                });
+            });
+    }
+
+    document.getElementById('projectFilter').addEventListener('change', filterGantt);
+    document.getElementById('userFilter').addEventListener('change', filterGantt);
+    document.getElementById('zoomLevel').addEventListener('change', filterGantt);
+
+    updateGanttProjectInfo('all');
+    createGanttChart(ganttData, 7);
+    createTeamChart();
+
+    // Refresh KPI cards every 45 seconds
+    setInterval(refreshKpiCards, 45000);
+</script>
+@endsection

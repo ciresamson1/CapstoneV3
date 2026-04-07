@@ -271,6 +271,7 @@ class AdminDashboardController extends Controller
                     'title' => Str::limit($task->title, 30),
                     'project' => $task->project?->name ?? 'Unknown',
                     'project_description' => $task->project?->description ?? 'No description available.',
+                    'project_created_at' => $task->project?->created_at?->timestamp ?? 0,
                     'assigned_to' => $task->assignedTo?->name ?? 'Unassigned',
                     'startOffset' => $offset,
                     'duration' => $duration,

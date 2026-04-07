@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\CommentReactionController;
 use App\Http\Controllers\TaskCommentController;
 
 Route::get('/', function () {
@@ -16,7 +17,14 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Role-based dashboard redirect
+    Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
+
+    // PM dedicated dashboard
+    Route::get('/pm/dashboard', [DashboardController::class, 'index'])->middleware('role:pm')->name('pm.dashboard');
+
+    // PM projects (filtered to PM's own projects)
+    Route::get('/pm/projects', [ProjectController::class, 'pmIndex'])->middleware('role:pm')->name('pm.projects');
 
     /*
     |--------------------------------------------------------------------------
@@ -44,6 +52,10 @@ Route::middleware(['auth'])->group(function () {
         [TaskController::class, 'toggle']
     );
 
+    Route::put('/tasks/{id}',
+        [TaskController::class, 'update']
+    )->name('tasks.update');
+
     /*
     |--------------------------------------------------------------------------
     | Task Comments
@@ -62,6 +74,10 @@ Route::middleware(['auth'])->group(function () {
         [TaskCommentController::class, 'download']
     )->name('task-comments.download');
 
+    Route::post('/task-comments/{comment}/react',
+        [CommentReactionController::class, 'toggle']
+    )->name('task-comments.react');
+
     /*
     |--------------------------------------------------------------------------
     | Notifications
@@ -79,9 +95,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/chart-data', [AdminDashboardController::class, 'chartData'])->name('dashboard.chart-data');
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('/users/invite', [AdminUserController::class, 'invite'])->name('users.invite');
+    });
+
+    // Shared routes: accessible by admin and pm roles
+    Route::prefix('admin')->middleware(['auth', 'role:admin,pm'])->name('admin.')->group(function () {
         Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
         Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
         Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+        Route::get('/report/pdf/{userId}', [ReportController::class, 'pdf'])->name('report.pdf');
     });
 
 });

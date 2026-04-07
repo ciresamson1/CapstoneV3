@@ -1,153 +1,570 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('content')
-<style>
-    .dashboard-sidebar { background: #101828; color: #f8fafc; }
-    .dashboard-sidebar .sidebar-brand h5 { color: #f8fafc; }
-    .dashboard-sidebar .sidebar-brand small { color: #94a3b8; }
-    .dashboard-sidebar .sidebar-profile { background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.15); }
-    .dashboard-sidebar .sidebar-profile .fw-semibold { color: #f8fafc; }
-    .dashboard-sidebar .sidebar-profile .small { color: #94a3b8; }
-    .dashboard-sidebar .sidebar-title { color: #94a3b8; letter-spacing: .08em; }
-    .dashboard-sidebar .nav-link { color: #cbd5e1; background: transparent; border-radius: 18px; padding: .85rem 1rem; transition: .2s ease; }
-    .dashboard-sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
-    .dashboard-sidebar .nav-link.active { color: #fff; background: #2563eb; box-shadow: 0 16px 40px rgba(37,99,235,.18); }
-    .dashboard-sidebar .nav-link .nav-icon { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: .75rem; background: rgba(255,255,255,.08); }
-    .dashboard-sidebar .sidebar-footer { background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.15); }
-    .dashboard-header { background: #fff; border-radius: 24px; box-shadow: 0 24px 60px rgba(15,23,42,.08); }
-    .dashboard-card { border: 0; border-radius: 24px; box-shadow: 0 12px 30px rgba(15,23,42,.05); }
-</style>
+<div class="min-h-screen overflow-x-hidden bg-slate-100">
+    <div class="flex min-h-screen flex-col xl:flex-row">
 
-<div class="container-fluid mt-4">
-    <div class="row gx-4">
-        <aside class="col-12 col-xl-3 mb-4">
-            <div class="dashboard-sidebar h-100 rounded-4 p-4 d-flex flex-column" style="min-height: calc(100vh - 2rem);">
-                <div class="mb-5">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="rounded-3 bg-white text-gray-900 d-flex align-items-center justify-content-center" style="width:50px; height:50px; font-weight:700;">L</div>
-                        <div class="ms-3">
-                            <h5 class="mb-1">Material Dashboard</h5>
-                            <small class="text-muted">Laravel Example</small>
-                        </div>
-                    </div>
-                    <div class="p-3 rounded-4 bg-white bg-opacity-10 mb-4">
-                        <div class="fw-semibold">{{ auth()->user()->name }}</div>
-                        <div class="small text-muted">{{ auth()->user()->role }}</div>
+        {{-- Sidebar --}}
+        <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
+            <div class="mb-10">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-950 font-bold">PC</div>
+                    <div>
+                        <h1 class="text-lg font-semibold">PCMS Portal</h1>
+                        <p class="text-sm text-slate-400">Project Coordination</p>
                     </div>
                 </div>
-
-                <div class="mb-4">
-                    <h6 class="sidebar-title text-uppercase small mb-3">Navigation</h6>
-                    <nav class="nav flex-column gap-2">
-                        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                            <span class="nav-icon">🏠</span> Dashboard
-                        </a>
-                        <a href="{{ route('projects.index') }}" class="nav-link {{ request()->routeIs('projects.index') ? 'active' : '' }}">
-                            <span class="nav-icon">📁</span> Projects
-                        </a>
-                        <a href="{{ route('projects.create') }}" class="nav-link {{ request()->routeIs('projects.create') ? 'active' : '' }}">
-                            <span class="nav-icon">➕</span> Create Project
-                        </a>
-                    </nav>
+                <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900 p-4">
+                    <div class="text-sm text-slate-400">Signed in as</div>
+                    <div class="mt-2 text-base font-semibold text-white">{{ auth()->user()->name }}</div>
+                    <div class="text-sm text-slate-500">{{ auth()->user()->role }}</div>
                 </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
+                <nav class="space-y-2">
+                    <a href="{{ route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500 text-white">🏠</span>
+                        Dashboard
+                    </a>
+                    <a href="{{ route('pm.projects') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
+                        Projects
+                    </a>
+                    <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
+                        Tasks
+                    </a>
+                    <a href="{{ route('admin.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
+                        Activity Log
+                    </a>
+                    <a href="{{ route('admin.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
+                        Reports
+                    </a>
+                </nav>
+            </div>
+
+            <div class="mt-10 border-t border-slate-800 pt-6">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800 hover:text-white">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🚪</span>
+                        Logout
+                    </button>
+                </form>
             </div>
         </aside>
 
-        <main class="col-12 col-xl-9">
-            <div class="dashboard-header p-4 mb-4">
-                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-                    <div>
-                        <h4 class="mb-1">Dashboard</h4>
-                        <p class="text-muted mb-0">Welcome back, here is a quick overview of your project activity.</p>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 w-100 w-md-auto">
-                        <div class="input-group" style="min-width: 240px;">
-                            <input type="text" class="form-control form-control-sm" placeholder="Type here...">
-                            <button class="btn btn-primary btn-sm" type="button">Search</button>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button class="btn btn-outline-danger btn-sm" type="submit">Logout</button>
-                        </form>
-                    </div>
+        {{-- Main Content --}}
+        <main class="flex-1 min-w-0 p-6 xl:p-8">
+
+            {{-- Header --}}
+            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-2xl font-semibold text-slate-900">Project Manager Dashboard</h2>
+                    <p class="mt-2 text-sm text-slate-500">Actionable insights and risk signals for the projects you manage.</p>
                 </div>
+                <button id="openCreateProjectModal" type="button" class="inline-flex items-center gap-2 rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">
+                    + New Project
+                </button>
             </div>
 
-            <div class="row g-4 mb-4">
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card dashboard-card p-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-3 bg-primary text-white p-2 me-3" style="width:44px; height:44px;">📁</div>
-                            <div>
-                                <small class="text-muted">Total Projects</small>
-                                <h5 class="mb-0">{{ $totalProjects }}</h5>
-                            </div>
+            {{-- KPI Cards --}}
+            <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach($kpiCards as $card)
+                <a href="{{ $card['url'] }}" class="group block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{{ $card['title'] }}</p>
+                            <p class="mt-4 text-3xl font-bold text-slate-900">{{ $card['value'] }}</p>
                         </div>
-                        <div class="text-success small">+5% than last week</div>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card dashboard-card p-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-3 bg-warning text-white p-2 me-3" style="width:44px; height:44px;">📝</div>
-                            <div>
-                                <small class="text-muted">Total Tasks</small>
-                                <h5 class="mb-0">{{ $totalTasks }}</h5>
-                            </div>
+                        <div class="flex h-12 w-12 items-center justify-center rounded-3xl text-lg" style="background-color: {{ $card['color'] === 'red' ? 'rgba(254,226,226,0.65)' : ($card['color'] === 'yellow' ? 'rgba(254,240,138,0.65)' : ($card['color'] === 'green' ? 'rgba(220,252,231,0.65)' : 'rgba(191,219,254,0.65)')) }}; color: {{ $card['color'] === 'red' ? '#dc2626' : ($card['color'] === 'yellow' ? '#f59e0b' : ($card['color'] === 'green' ? '#16a34a' : '#0284c7')) }};">
+                            @if($card['color'] === 'red') ⚠️ @elseif($card['color'] === 'yellow') ⏳ @elseif($card['color'] === 'green') ✅ @else 💬 @endif
                         </div>
-                        <div class="text-success small">+8% than last month</div>
                     </div>
-                </div>
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card dashboard-card p-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-3 bg-success text-white p-2 me-3" style="width:44px; height:44px;">✅</div>
-                            <div>
-                                <small class="text-muted">Completed Tasks</small>
-                                <h5 class="mb-0">{{ $completedTasks }}</h5>
-                            </div>
-                        </div>
-                        <div class="text-success small">+12% than yesterday</div>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card dashboard-card p-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-3 bg-dark text-white p-2 me-3" style="width:44px; height:44px;">⏰</div>
-                            <div>
-                                <small class="text-muted">Pending Tasks</small>
-                                <h5 class="mb-0">{{ $pendingTasks }}</h5>
-                            </div>
-                        </div>
-                        <div class="text-success small">+3% than yesterday</div>
-                    </div>
-                </div>
-            </div>
+                    <p class="mt-4 text-sm text-slate-500">{{ $card['note'] }}</p>
+                </a>
+                @endforeach
+            </section>
 
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="card dashboard-card p-4 h-100">
-                        <h6 class="text-muted">Project Insights</h6>
-                        <h3 class="mt-3">{{ $completedTasks }} completed tasks</h3>
-                        <p class="text-muted mb-0">Keep driving progress with the latest project updates and team performance.</p>
+            {{-- Smart Alerts --}}
+            <section class="mt-6">
+                <div class="rounded-3xl bg-white p-6 shadow-sm">
+                    <div class="mb-6 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">Smart Alerts</h3>
+                            <p class="text-sm text-slate-500">Critical updates and risk signals sorted by priority.</p>
+                        </div>
+                        <span class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">Real-time</span>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        @foreach($alerts as $alert)
+                            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-slate-900">{{ $alert['headline'] }}</p>
+                                        <p class="mt-2 text-sm text-slate-600">{{ $alert['details'] }}</p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $alert['color'] === 'red' ? 'bg-rose-100 text-rose-700' : ($alert['color'] === 'yellow' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700') }}">{{ $alert['label'] }}</span>
+                                </div>
+                                @if(isset($alert['items']) && is_iterable($alert['items']))
+                                    <div class="mt-4 space-y-2">
+                                        @foreach($alert['items'] as $item)
+                                            <div class="rounded-2xl bg-white p-3 text-sm text-slate-600 shadow-sm">
+                                                <p class="font-semibold text-slate-900">{{ $item['project'] }}</p>
+                                                <p>{{ $item['count'] }} overdue task{{ $item['count'] === 1 ? '' : 's' }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="card dashboard-card p-4 h-100">
-                        <h6 class="text-muted">Overdue Work</h6>
-                        <h3 class="mt-3 text-danger">{{ $overdueTasks }}</h3>
-                        <p class="text-muted mb-0">Tasks past due date. Assign owners and update priorities to stay on track.</p>
+            </section>
+
+            {{-- Project Health --}}
+            <section class="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-6 py-5">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">Project Health</h3>
+                            <p class="text-sm text-slate-500">Live performance overview for your active and at-risk projects.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-700">On Track</span>
+                            <span class="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700">At Risk</span>
+                            <span class="rounded-full bg-rose-100 px-3 py-1 text-sm text-rose-700">Delayed</span>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="card dashboard-card p-4 h-100">
-                        <h6 class="text-muted">Active Users</h6>
-                        <h3 class="mt-3">{{ $activeUsers }}</h3>
-                        <p class="text-muted mb-0">Total users currently active in the system with access to projects and tasks.</p>
+                <div class="overflow-x-auto px-6 py-6">
+                    <table class="min-w-full text-left text-sm text-slate-600">
+                        <thead>
+                            <tr>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Project Name</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Progress</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Status</th>
+                                <th class="pb-4 font-semibold text-slate-900">Team Load</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @if(is_iterable($projectHealth) && count($projectHealth))
+                                @foreach($projectHealth as $project)
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="py-5 pr-8 font-medium text-slate-900">{{ $project['name'] }}</td>
+                                        <td class="py-5 pr-8">
+                                            <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
+                                                @if($project['progress'] > 0)
+                                                    <div class="absolute inset-y-0 left-0 rounded-full bg-violet-500 transition-all" style="width: {{ $project['progress'] }}%"></div>
+                                                @endif
+                                                <span class="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-700">{{ $project['progress'] }}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-5 pr-8">
+                                            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $project['status'] === 'On Track' ? 'bg-emerald-100 text-emerald-700' : ($project['status'] === 'At Risk' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">{{ $project['status'] }}</span>
+                                        </td>
+                                        <td class="py-5 text-slate-700">{{ $project['load'] }}</td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="4" class="py-6 text-center text-sm text-slate-500">No projects to display.</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {{-- Gantt + Team Performance + Client Activity --}}
+            <section class="mt-6 grid gap-6 xl:grid-cols-[0.75fr_0.5fr]">
+
+                {{-- Gantt --}}
+                <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-w-0">
+                    <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">Interactive Gantt Timeline</h3>
+                            <p class="text-sm text-slate-500">Live timeline view of task windows, deadlines and project ownership.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="relative" id="projectSearchWrap">
+                                <input type="text" id="projectSearchInput" placeholder="Search project…" autocomplete="off"
+                                    class="w-52 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <input type="hidden" id="projectFilter" value="">
+                                <ul id="projectSuggestions"
+                                    class="absolute left-0 top-full z-30 mt-1 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                                    @foreach(collect($ganttData)->pluck('project')->unique()->values() as $projectName)
+                                        <li data-value="{{ $projectName }}"
+                                            class="cursor-pointer px-4 py-2.5 text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700">
+                                            {{ $projectName }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <select id="userFilter" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <option value="all">All Users</option>
+                                @foreach(collect($ganttData)->pluck('assigned_to')->unique() as $userName)
+                                    <option value="{{ $userName }}">{{ $userName }}</option>
+                                @endforeach
+                            </select>
+                            <select id="zoomLevel" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <option value="1">Day</option>
+                                <option value="7">Week</option>
+                                <option value="30">Month</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="mb-4">
+                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Gantt Timeline</p>
+                            <p id="ganttProjectTitle" class="mt-3 text-lg font-semibold text-slate-900">All Projects</p>
+                            <p id="ganttProjectDescription" class="mt-2 text-sm text-slate-500">Timeline across all projects.</p>
+                        </div>
+                        <div class="h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
+                            <canvas id="ganttChart" class="h-full w-full block" style="min-height:420px;"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                {{-- Team Performance + Client Activity --}}
+                <div class="space-y-6 min-w-0">
+                    <div class="rounded-3xl bg-white p-6 shadow-sm min-w-0">
+                        <h3 class="text-lg font-semibold text-slate-900">Team Performance</h3>
+                        <p class="text-sm text-slate-500">Completed and delayed tasks per member.</p>
+                        <div class="mt-6 h-[320px] min-w-0">
+                            <canvas id="teamPerformanceChart" class="h-full w-full"></canvas>
+                        </div>
+                    </div>
+                    <div class="rounded-3xl bg-white p-6 shadow-sm">
+                        <h3 class="text-lg font-semibold text-slate-900">Client Activity</h3>
+                        <p class="text-sm text-slate-500">Pending approvals and recent feedback.</p>
+                        <div class="mt-6 space-y-4">
+                            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm text-slate-500">Pending approvals</p>
+                                    <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">{{ $clientActivity['pendingApprovals'] }}</span>
+                                </div>
+                                <p class="mt-3 text-sm text-slate-600">Currently awaiting client review and confirmation.</p>
+                            </div>
+                            <div class="rounded-3xl bg-slate-50 p-4">
+                                <h4 class="text-sm font-semibold text-slate-900">Recent client comments</h4>
+                                <div class="mt-4 space-y-3">
+                                    @forelse($clientActivity['recentComments'] as $comment)
+                                        <div class="rounded-3xl border border-slate-200 bg-white p-4">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p class="font-semibold text-slate-900">{{ $comment['user'] }}</p>
+                                                    <p class="text-sm text-slate-500">{{ $comment['project'] }}</p>
+                                                </div>
+                                                <span class="text-xs text-slate-400">{{ $comment['time'] }}</span>
+                                            </div>
+                                            <p class="mt-3 text-sm text-slate-600">{{ $comment['message'] }}</p>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-slate-500">No recent client comments.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                            <div class="rounded-3xl bg-slate-50 p-4">
+                                <h4 class="text-sm font-semibold text-slate-900">Revision cycles</h4>
+                                <div class="mt-3 space-y-2">
+                                    @forelse($clientActivity['revisionCycles'] as $cycle)
+                                        <div class="flex items-center justify-between rounded-3xl bg-white p-3 text-sm text-slate-600">
+                                            <span>{{ $cycle['project'] }}</span>
+                                            <span class="font-semibold text-slate-900">{{ $cycle['cycles'] }}</span>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-slate-500">No revision data.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
         </main>
     </div>
 </div>
+
+{{-- Create Project Modal --}}
+<div id="createProjectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
+    <div class="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h3 class="text-xl font-semibold text-slate-900">Create new project</h3>
+                <p class="mt-2 text-sm text-slate-500">Fill in the details below to add a project.</p>
+            </div>
+            <button id="closeCreateProjectModal" type="button" class="rounded-3xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-100">Close</button>
+        </div>
+
+        @if($errors->any())
+            <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                <ul class="list-inside list-disc space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('projects.store') }}" class="mt-6 grid gap-4 sm:grid-cols-2">
+            @csrf
+            <div class="sm:col-span-2">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Project name <span class="text-rose-500">*</span></label>
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. SEO Campaign Q2" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Description</label>
+                <textarea name="description" rows="3" placeholder="Brief project overview..." class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 resize-none">{{ old('description') }}</textarea>
+            </div>
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Start date <span class="text-rose-500">*</span></label>
+                <input type="date" name="start_date" value="{{ old('start_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+            </div>
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700">End date <span class="text-rose-500">*</span></label>
+                <input type="date" name="end_date" value="{{ old('end_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Status</label>
+                <select name="status" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                    <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="on_hold" {{ old('status') === 'on_hold' ? 'selected' : '' }}>On Hold</option>
+                    <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ganttData = @json($ganttData);
+    const teamPerformance = @json($teamPerformance);
+
+    const ganttCtx = document.getElementById('ganttChart').getContext('2d');
+    const teamCtx  = document.getElementById('teamPerformanceChart').getContext('2d');
+
+    let ganttChart;
+    let teamChart;
+
+    function formatDateOffset(offset) {
+        const date = new Date();
+        date.setDate(date.getDate() + Number(offset));
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    function getZoomLabel(zoomDays) {
+        if (zoomDays === 1) return 'Daily timeline';
+        if (zoomDays === 7) return 'Weekly timeline';
+        return 'Monthly timeline';
+    }
+
+    function createGanttChart(data, zoomDays) {
+        const maxSpan = Math.max(...data.map(item => item.startOffset + item.duration), 7);
+
+        if (ganttChart) ganttChart.destroy();
+
+        ganttChart = new Chart(ganttCtx, {
+            type: 'bar',
+            data: {
+                labels: data.map(item => item.title),
+                datasets: [
+                    {
+                        label: 'Start offset',
+                        backgroundColor: 'rgba(203,213,225,0.3)',
+                        stack: 'combined',
+                        data: data.map(item => item.startOffset),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        maxBarThickness: 28,
+                    },
+                    {
+                        label: 'Duration',
+                        backgroundColor: data.map(item => item.color),
+                        stack: 'combined',
+                        data: data.map(item => item.duration),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        maxBarThickness: 28,
+                    },
+                ],
+            },
+            options: {
+                indexAxis: 'y',
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        stacked: true,
+                        min: 0,
+                        max: Math.max(maxSpan, 7),
+                        ticks: {
+                            stepSize: zoomDays,
+                            callback: value => formatDateOffset(value),
+                            color: '#475569',
+                        },
+                        title: { display: true, text: getZoomLabel(zoomDays), color: '#475569' },
+                        grid: { color: 'rgba(15,23,42,0.08)' },
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: { color: '#475569' },
+                        grid: { display: false },
+                    },
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ctx.dataset.label === 'Start offset'
+                                ? 'Starts in ' + ctx.formattedValue + ' days'
+                                : 'Duration: ' + ctx.formattedValue + ' days',
+                        },
+                    },
+                    legend: { display: false },
+                },
+            },
+        });
+    }
+
+    function createTeamChart() {
+        if (teamChart) teamChart.destroy();
+
+        teamChart = new Chart(teamCtx, {
+            type: 'bar',
+            data: {
+                labels: teamPerformance.labels,
+                datasets: [
+                    { label: 'Completed Tasks', data: teamPerformance.completed, backgroundColor: '#22c55e', borderRadius: 12 },
+                    { label: 'Delayed Tasks',   data: teamPerformance.delayed,   backgroundColor: '#f59e0b', borderRadius: 12 },
+                ],
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true },
+                },
+            },
+        });
+    }
+
+    const ganttProjectTitleEl       = document.getElementById('ganttProjectTitle');
+    const ganttProjectDescriptionEl = document.getElementById('ganttProjectDescription');
+
+    function getUniqueGanttProject() {
+        const unique = Object.values(ganttData.reduce((acc, item) => {
+            if (!acc[item.project]) acc[item.project] = item;
+            return acc;
+        }, {}));
+        return unique.length === 1 ? unique[0] : null;
+    }
+
+    function updateGanttProjectInfo(selectedProject) {
+        const projectItem = (!selectedProject || selectedProject === 'all')
+            ? getUniqueGanttProject()
+            : ganttData.find(item => item.project === selectedProject);
+
+        if (!projectItem) {
+            ganttProjectTitleEl.textContent       = '';
+            ganttProjectDescriptionEl.textContent = '';
+            return;
+        }
+        ganttProjectTitleEl.textContent       = projectItem.project;
+        ganttProjectDescriptionEl.textContent = projectItem.project_description || 'Timeline for the selected project.';
+    }
+
+    function filterGantt() {
+        const project  = document.getElementById('projectFilter').value;
+        const user     = document.getElementById('userFilter').value;
+        const zoom     = parseInt(document.getElementById('zoomLevel').value, 10);
+        const filtered = ganttData.filter(item => {
+            const projectMatch = !project || item.project === project;
+            const userMatch    = user === 'all' || item.assigned_to === user;
+            return projectMatch && userMatch;
+        });
+        updateGanttProjectInfo(project || 'all');
+        createGanttChart(filtered, zoom);
+    }
+
+    // Project suggestive search
+    const projectSearchInput  = document.getElementById('projectSearchInput');
+    const projectFilterHidden = document.getElementById('projectFilter');
+    const projectSuggestions  = document.getElementById('projectSuggestions');
+    const projectItems        = projectSuggestions.querySelectorAll('li');
+
+    projectSearchInput.addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        let hasVisible = false;
+        projectItems.forEach(li => {
+            const match = li.dataset.value.toLowerCase().includes(q);
+            li.style.display = match ? '' : 'none';
+            if (match) hasVisible = true;
+        });
+        projectSuggestions.classList.toggle('hidden', !q || !hasVisible);
+        if (!q) {
+            projectFilterHidden.value = '';
+            filterGantt();
+        }
+    });
+
+    projectItems.forEach(li => {
+        li.addEventListener('click', function () {
+            projectSearchInput.value  = this.dataset.value;
+            projectFilterHidden.value = this.dataset.value;
+            projectSuggestions.classList.add('hidden');
+            filterGantt();
+        });
+    });
+
+    document.addEventListener('click', e => {
+        if (!document.getElementById('projectSearchWrap').contains(e.target)) {
+            projectSuggestions.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('userFilter').addEventListener('change', filterGantt);
+    document.getElementById('zoomLevel').addEventListener('change', filterGantt);
+
+    // Init
+    updateGanttProjectInfo('all');
+    createGanttChart(ganttData, 7);
+
+    if (ganttData.length > 0) {
+        const mostRecent = ganttData.reduce((a, b) =>
+            (a.project_created_at ?? 0) >= (b.project_created_at ?? 0) ? a : b);
+        if (mostRecent.project) {
+            projectSearchInput.value  = mostRecent.project;
+            projectFilterHidden.value = mostRecent.project;
+            filterGantt();
+        }
+    }
+
+    createTeamChart();
+
+    // Create Project Modal
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('createProjectModal');
+        function openModal()  { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+        document.getElementById('openCreateProjectModal').addEventListener('click', openModal);
+        document.getElementById('closeCreateProjectModal').addEventListener('click', closeModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+        @if($errors->any()) openModal(); @endif
+    });
+</script>
 @endsection

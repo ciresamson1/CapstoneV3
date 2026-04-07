@@ -39,4 +39,9 @@ class TaskComment extends Model
             ->with('user')
             ->orderBy('created_at', 'asc');
     }
+
+    public function reactions()
+    {
+        return $this->hasMany(CommentReaction::class, 'comment_id');
+    }
 }

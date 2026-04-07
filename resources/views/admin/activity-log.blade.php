@@ -24,7 +24,7 @@
             <div class="space-y-4">
                 <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
                 <nav class="space-y-2">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
                         Dashboard
                     </a>
@@ -44,10 +44,12 @@
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
                         Reports
                     </a>
+                    @if(auth()->user()->role === 'admin')
                     <button id="openAssignRoleModal" type="button" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">👥</span>
                         Assign Role
                     </button>
+                    @endif
                 </nav>
             </div>
         </aside>
@@ -189,6 +191,7 @@
     </div>
 </div>
 
+@if(auth()->user()->role === 'admin')
 {{-- Assign Role Modal --}}
 <div id="assignRoleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
     <div class="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
@@ -220,6 +223,7 @@
         </form>
     </div>
 </div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -240,9 +244,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const modal = document.getElementById('assignRoleModal');
-    document.getElementById('openAssignRoleModal').addEventListener('click', () => modal.classList.remove('hidden'));
-    document.getElementById('closeAssignRoleModal').addEventListener('click', () => modal.classList.add('hidden'));
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    if (modal) {
+        document.getElementById('openAssignRoleModal').addEventListener('click', () => modal.classList.remove('hidden'));
+        document.getElementById('closeAssignRoleModal').addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    }
 });
 </script>
 @endsection

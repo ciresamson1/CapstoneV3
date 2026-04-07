@@ -3,12 +3,14 @@
 @section('content')
 <div class="min-h-screen overflow-x-hidden bg-slate-100">
     <div class="flex min-h-screen flex-col xl:flex-row">
+
+        {{-- PM Sidebar --}}
         <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
             <div class="mb-10">
                 <div class="flex items-center gap-3">
                     <div class="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-950 font-bold">PC</div>
                     <div>
-                        <h1 class="text-lg font-semibold">PCMS Admin</h1>
+                        <h1 class="text-lg font-semibold">PCMS Portal</h1>
                         <p class="text-sm text-slate-400">Project Coordination</p>
                     </div>
                 </div>
@@ -22,12 +24,12 @@
             <div class="space-y-4">
                 <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
                 <nav class="space-y-2">
-                    <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-300' }}">
+                    <a href="{{ route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
                         Dashboard
                     </a>
-                    <a href="{{ route('projects.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 {{ request()->routeIs('projects.index') ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-300' }}">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
+                    <a href="{{ route('pm.projects') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500 text-white">📁</span>
                         Projects
                     </a>
                     <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
@@ -42,27 +44,26 @@
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
                         Reports
                     </a>
-                    @if(auth()->user()->role === 'admin')
-                    <button id="openAssignRoleModal" type="button" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">👥</span>
-                        Assign Role
-                    </button>
-                    @endif
                 </nav>
+            </div>
+
+            <div class="mt-10 border-t border-slate-800 pt-6">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800 hover:text-white">
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🚪</span>
+                        Logout
+                    </button>
+                </form>
             </div>
         </aside>
 
+        {{-- Main Content --}}
         <main class="flex-1 min-w-0 p-6 xl:p-8">
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-2xl font-semibold text-slate-900">Projects</h2>
                     <p class="mt-2 text-sm text-slate-500">Browse and filter active projects with a dashboard-first interface.</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="rounded-3xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">Logout</button>
-                    </form>
                 </div>
             </div>
 
@@ -70,6 +71,8 @@
                 @if(session('status'))
                     <div class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{{ session('status') }}</div>
                 @endif
+
+                {{-- Summary cards --}}
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-sm text-slate-500">Total projects</p>
@@ -77,14 +80,17 @@
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-sm text-slate-500">Average completion</p>
-                        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ $projects->avg('progress') ?? 0 }}%</p>
+                        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ round($projects->avg('progress') ?? 0) }}%</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2 lg:col-span-1">
                         <p class="text-sm text-slate-500">Most active owner</p>
-                        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ collect($projects)->groupBy('creator.name')->sortByDesc(fn($items) => $items->count())->keys()->first() ?? 'N/A' }}</p>
+                        <p class="mt-2 text-3xl font-semibold text-slate-900">
+                            {{ $projects->groupBy(fn($p) => $p->creator?->name ?? 'Unassigned')->sortByDesc(fn($items) => $items->count())->keys()->first() ?? 'N/A' }}
+                        </p>
                     </div>
                 </div>
 
+                {{-- Table header + controls --}}
                 <div class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900">Project table</h3>
@@ -97,12 +103,13 @@
                     </div>
                 </div>
 
+                {{-- Filters --}}
                 <div class="mt-4 grid gap-3 sm:grid-cols-3">
                     <div>
                         <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Status</label>
                         <select id="filterStatus" class="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
                             <option value="all">All Statuses</option>
-                            @foreach(collect($projects)->pluck('status')->unique()->filter()->sort()->values() as $status)
+                            @foreach($projects->pluck('status')->unique()->filter()->sort()->values() as $status)
                                 <option value="{{ $status }}">{{ ucfirst($status) }}</option>
                             @endforeach
                         </select>
@@ -111,7 +118,7 @@
                         <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Owner</label>
                         <select id="filterOwner" class="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
                             <option value="all">All Owners</option>
-                            @foreach(collect($projects)->pluck('creator.name')->unique()->filter()->sort()->values() as $owner)
+                            @foreach($projects->pluck('creator.name')->unique()->filter()->sort()->values() as $owner)
                                 <option value="{{ $owner }}">{{ $owner }}</option>
                             @endforeach
                         </select>
@@ -128,6 +135,7 @@
                     </div>
                 </div>
 
+                {{-- Table --}}
                 <div class="overflow-x-auto">
                     <table id="projectsTable" class="mt-6 min-w-full text-left text-sm text-slate-600">
                         <thead>
@@ -142,8 +150,11 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200" id="projectsTableBody">
-                            @foreach($projects as $project)
-                                <tr class="hover:bg-slate-50 project-row" data-status="{{ $project->status }}" data-owner="{{ $project->creator?->name ?? 'Unassigned' }}" data-progress="{{ $project->progress }}">
+                            @forelse($projects as $project)
+                                <tr class="hover:bg-slate-50 project-row"
+                                    data-status="{{ $project->status }}"
+                                    data-owner="{{ $project->creator?->name ?? 'Unassigned' }}"
+                                    data-progress="{{ $project->progress }}">
                                     <td class="py-5 pr-8">
                                         <div class="font-semibold text-slate-900">{{ $project->name }}</div>
                                         <div class="text-sm text-slate-500">{{ \Illuminate\Support\Str::limit($project->description, 80) }}</div>
@@ -157,24 +168,34 @@
                                             <span class="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-700">{{ $project->progress }}%</span>
                                         </div>
                                     </td>
-                                    <td class="py-5 pr-8 text-slate-700">
-                                        <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $project->status === 'active' ? 'bg-emerald-100 text-emerald-700' : ($project->status === 'on-hold' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700') }}">{{ ucfirst($project->status) }}</span>
+                                    <td class="py-5 pr-8">
+                                        <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
+                                            {{ $project->status === 'active' ? 'bg-emerald-100 text-emerald-700' : ($project->status === 'on_hold' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700') }}">
+                                            {{ ucfirst(str_replace('_', ' ', $project->status)) }}
+                                        </span>
                                     </td>
                                     <td class="py-5 pr-8 text-slate-700">{{ $project->tasks_count }}</td>
-                                    <td class="py-5 pr-8 text-slate-700">{{ $project->end_date ? \Illuminate\Support\Carbon::parse($project->end_date)->format('M d, Y') : 'TBD' }}</td>
+                                    <td class="py-5 pr-8 text-slate-700">{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('M d, Y') : 'TBD' }}</td>
                                     <td class="py-5 text-slate-700">
-                                        <a href="{{ route('projects.show', $project->id) }}" class="rounded-full bg-violet-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-600">View</a>
-                                        <button type="button"
-                                            onclick="openEditProject({{ $project->id }}, '{{ addslashes($project->name) }}', '{{ addslashes($project->description) }}', '{{ $project->start_date }}', '{{ $project->end_date }}', '{{ $project->status }}')"
-                                            class="rounded-full bg-sky-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-600">Edit</button>
-                                        <form method="POST" action="{{ route('projects.destroy', $project->id) }}" class="inline"
-                                              onsubmit="return confirm('Delete project "{{ addslashes($project->name) }}"? This cannot be undone.')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="rounded-full bg-rose-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-600">Delete</button>
-                                        </form>
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('projects.show', $project->id) }}"
+                                               class="rounded-full bg-violet-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-600">View</a>
+                                            <button type="button"
+                                                onclick="openEditProject({{ $project->id }}, '{{ addslashes($project->name) }}', '{{ addslashes($project->description) }}', '{{ $project->start_date }}', '{{ $project->end_date }}', '{{ $project->status }}')"
+                                                class="rounded-full bg-sky-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-600">Edit</button>
+                                            <form method="POST" action="{{ route('projects.destroy', $project->id) }}" class="inline"
+                                                  onsubmit="return confirm('Delete project &quot;{{ addslashes($project->name) }}&quot;? This cannot be undone.')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="rounded-full bg-rose-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-600">Delete</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="py-10 text-center text-sm text-slate-500">No projects yet. Create your first project above.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -183,141 +204,6 @@
         </main>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('projectSearch');
-        const filterStatus = document.getElementById('filterStatus');
-        const filterOwner = document.getElementById('filterOwner');
-        const filterProgress = document.getElementById('filterProgress');
-        const clearFilters = document.getElementById('clearFilters');
-        const rows = Array.from(document.querySelectorAll('.project-row'));
-        const noResultsMessage = document.getElementById('noResultsMessage');
-
-        function parseProgressRange(value) {
-            if (value === 'all') return null;
-            const [min, max] = value.split('-').map(Number);
-            return { min, max };
-        }
-
-        function filterProjects() {
-            const keyword = searchInput.value.toLowerCase().trim();
-            const status = filterStatus.value;
-            const owner = filterOwner.value;
-            const progressRange = parseProgressRange(filterProgress.value);
-
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                const name = row.querySelector('td:first-child .font-semibold').textContent.toLowerCase();
-                const description = row.querySelector('td:first-child .text-sm').textContent.toLowerCase();
-                const rowStatus = row.dataset.status.toLowerCase();
-                const rowOwner = row.dataset.owner.toLowerCase();
-                const rowProgress = Number(row.dataset.progress);
-
-                const matchesKeyword = keyword === '' || name.includes(keyword) || description.includes(keyword) || rowStatus.includes(keyword) || rowOwner.includes(keyword);
-                const matchesStatus = status === 'all' || rowStatus === status.toLowerCase();
-                const matchesOwner = owner === 'all' || rowOwner === owner.toLowerCase();
-                const matchesProgress = !progressRange || (rowProgress >= progressRange.min && rowProgress <= progressRange.max);
-
-                const visible = matchesKeyword && matchesStatus && matchesOwner && matchesProgress;
-                row.style.display = visible ? '' : 'none';
-                if (visible) visibleCount += 1;
-            });
-
-            noResultsMessage.classList.toggle('hidden', visibleCount > 0);
-        }
-
-        searchInput.addEventListener('input', filterProjects);
-        filterStatus.addEventListener('change', filterProjects);
-        filterOwner.addEventListener('change', filterProjects);
-        filterProgress.addEventListener('change', filterProjects);
-        clearFilters.addEventListener('click', (event) => {
-            event.preventDefault();
-            searchInput.value = '';
-            filterStatus.value = 'all';
-            filterOwner.value = 'all';
-            filterProgress.value = 'all';
-            filterProjects();
-        });
-
-        const assignRoleModal = document.getElementById('assignRoleModal');
-        const openAssignRoleModal = document.getElementById('openAssignRoleModal');
-        const closeAssignRoleModal = document.getElementById('closeAssignRoleModal');
-
-        if (assignRoleModal && openAssignRoleModal) {
-            openAssignRoleModal.addEventListener('click', () => {
-                assignRoleModal.classList.remove('hidden');
-            });
-
-            closeAssignRoleModal.addEventListener('click', () => {
-                assignRoleModal.classList.add('hidden');
-            });
-
-            assignRoleModal.addEventListener('click', (event) => {
-                if (event.target === assignRoleModal) {
-                    assignRoleModal.classList.add('hidden');
-                }
-            });
-        }
-
-        // Create Project modal
-        const createProjectModal = document.getElementById('createProjectModal');
-        document.getElementById('openCreateProjectModal').addEventListener('click', () => {
-            createProjectModal.classList.remove('hidden');
-            createProjectModal.classList.add('flex');
-        });
-        document.getElementById('closeCreateProjectModal').addEventListener('click', () => {
-            createProjectModal.classList.add('hidden');
-            createProjectModal.classList.remove('flex');
-        });
-        createProjectModal.addEventListener('click', e => {
-            if (e.target === createProjectModal) {
-                createProjectModal.classList.add('hidden');
-                createProjectModal.classList.remove('flex');
-            }
-        });
-
-        // Auto-reopen create modal on validation error
-        @if($errors->any())
-            createProjectModal.classList.remove('hidden');
-            createProjectModal.classList.add('flex');
-        @endif
-    });
-</script>
-
-@if(auth()->user()->role === 'admin')
-<div id="assignRoleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
-    <div class="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h3 class="text-xl font-semibold text-slate-900">Invite a new user</h3>
-                <p class="mt-2 text-sm text-slate-500">Send a registration link with a preselected role.</p>
-            </div>
-            <button id="closeAssignRoleModal" type="button" class="rounded-3xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-100">Close</button>
-        </div>
-        <form method="POST" action="{{ route('admin.users.invite') }}" class="mt-6 grid gap-4 sm:grid-cols-2">
-            @csrf
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Email</label>
-                <input type="email" name="email" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div>
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Role</label>
-                <select name="role" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-                    <option value="admin">Admin</option>
-                    <option value="pm">Project Manager</option>
-                    <option value="dm">Digital Marketer</option>
-                    <option value="client">Client</option>
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Send Invite</button>
-            </div>
-        </form>
-    </div>
-</div>
-@endif
 
 {{-- Create Project Modal --}}
 <div id="createProjectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
@@ -344,25 +230,29 @@
             @csrf
             <div class="sm:col-span-2">
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Project name <span class="text-rose-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. SEO Campaign Q2" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. SEO Campaign Q2"
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
             </div>
             <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Description <span class="text-rose-500">*</span></label>
-                <textarea name="description" rows="3" placeholder="Brief project overview..." class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 resize-none">{{ old('description') }}</textarea>
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Description</label>
+                <textarea name="description" rows="3" placeholder="Brief project overview..."
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 resize-none">{{ old('description') }}</textarea>
             </div>
             <div>
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Start date <span class="text-rose-500">*</span></label>
-                <input type="date" name="start_date" value="{{ old('start_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+                <input type="date" name="start_date" value="{{ old('start_date') }}"
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
             </div>
             <div>
                 <label class="mb-2 block text-sm font-semibold text-slate-700">End date <span class="text-rose-500">*</span></label>
-                <input type="date" name="end_date" value="{{ old('end_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+                <input type="date" name="end_date" value="{{ old('end_date') }}"
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
             </div>
             <div class="sm:col-span-2">
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Status</label>
                 <select name="status" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
                     <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="on_hold" {{ old('status') === 'on_hold' ? 'selected' : '' }}>On Hold</option>
+                    <option value="on_hold"  {{ old('status') === 'on_hold'  ? 'selected' : '' }}>On Hold</option>
                     <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                 </select>
             </div>
@@ -383,25 +273,27 @@
             </div>
             <button id="closeEditProjectModal" type="button" class="rounded-3xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-100">Close</button>
         </div>
-
         <form id="editProjectForm" method="POST" action="" class="mt-6 grid gap-4 sm:grid-cols-2">
-            @csrf
-            @method('PUT')
+            @csrf @method('PUT')
             <div class="sm:col-span-2">
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Project name <span class="text-rose-500">*</span></label>
-                <input type="text" id="edit_name" name="name" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+                <input type="text" id="edit_name" name="name"
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
             </div>
             <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Description <span class="text-rose-500">*</span></label>
-                <textarea id="edit_description" name="description" rows="3" class="w-full resize-none rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"></textarea>
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Description</label>
+                <textarea id="edit_description" name="description" rows="3"
+                    class="w-full resize-none rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100"></textarea>
             </div>
             <div>
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Start date <span class="text-rose-500">*</span></label>
-                <input type="date" id="edit_start_date" name="start_date" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+                <input type="date" id="edit_start_date" name="start_date"
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
             </div>
             <div>
                 <label class="mb-2 block text-sm font-semibold text-slate-700">End date <span class="text-rose-500">*</span></label>
-                <input type="date" id="edit_end_date" name="end_date" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
+                <input type="date" id="edit_end_date" name="end_date"
+                    class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
             </div>
             <div class="sm:col-span-2">
                 <label class="mb-2 block text-sm font-semibold text-slate-700">Status</label>
@@ -412,34 +304,103 @@
                 </select>
             </div>
             <div class="sm:col-span-2">
-                <button type="submit" class="w-full rounded-3xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-400">Save Changes</button>
+                <button type="submit" class="w-full rounded-3xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-600">Save Changes</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    const editModal = document.getElementById('editProjectModal');
-    document.getElementById('closeEditProjectModal').addEventListener('click', () => {
-        editModal.classList.add('hidden');
-        editModal.classList.remove('flex');
-    });
-    editModal.addEventListener('click', e => {
-        if (e.target === editModal) {
-            editModal.classList.add('hidden');
-            editModal.classList.remove('flex');
+    document.addEventListener('DOMContentLoaded', function () {
+        // -- Filters --
+        const searchInput   = document.getElementById('projectSearch');
+        const filterStatus  = document.getElementById('filterStatus');
+        const filterOwner   = document.getElementById('filterOwner');
+        const filterProgress = document.getElementById('filterProgress');
+        const clearFilters  = document.getElementById('clearFilters');
+        const rows          = Array.from(document.querySelectorAll('.project-row'));
+        const noResults     = document.getElementById('noResultsMessage');
+
+        function parseProgressRange(value) {
+            if (value === 'all') return null;
+            const [min, max] = value.split('-').map(Number);
+            return { min, max };
         }
+
+        function filterProjects() {
+            const keyword  = searchInput.value.toLowerCase().trim();
+            const status   = filterStatus.value;
+            const owner    = filterOwner.value;
+            const range    = parseProgressRange(filterProgress.value);
+            let visible    = 0;
+
+            rows.forEach(row => {
+                const name       = row.querySelector('td:first-child .font-semibold').textContent.toLowerCase();
+                const desc       = row.querySelector('td:first-child .text-sm').textContent.toLowerCase();
+                const rowStatus  = row.dataset.status.toLowerCase();
+                const rowOwner   = row.dataset.owner.toLowerCase();
+                const rowProg    = Number(row.dataset.progress);
+
+                const ok = (keyword === '' || name.includes(keyword) || desc.includes(keyword) || rowStatus.includes(keyword) || rowOwner.includes(keyword))
+                    && (status === 'all' || rowStatus === status.toLowerCase())
+                    && (owner  === 'all' || rowOwner  === owner.toLowerCase())
+                    && (!range || (rowProg >= range.min && rowProg <= range.max));
+
+                row.style.display = ok ? '' : 'none';
+                if (ok) visible++;
+            });
+
+            noResults.classList.toggle('hidden', visible > 0 || rows.length === 0);
+        }
+
+        searchInput.addEventListener('input', filterProjects);
+        filterStatus.addEventListener('change', filterProjects);
+        filterOwner.addEventListener('change', filterProjects);
+        filterProgress.addEventListener('change', filterProjects);
+        clearFilters.addEventListener('click', e => {
+            e.preventDefault();
+            searchInput.value    = '';
+            filterStatus.value   = 'all';
+            filterOwner.value    = 'all';
+            filterProgress.value = 'all';
+            filterProjects();
+        });
+
+        // -- Create Modal --
+        const createModal = document.getElementById('createProjectModal');
+        document.getElementById('openCreateProjectModal').addEventListener('click', () => {
+            createModal.classList.remove('hidden'); createModal.classList.add('flex');
+        });
+        document.getElementById('closeCreateProjectModal').addEventListener('click', () => {
+            createModal.classList.add('hidden'); createModal.classList.remove('flex');
+        });
+        createModal.addEventListener('click', e => {
+            if (e.target === createModal) { createModal.classList.add('hidden'); createModal.classList.remove('flex'); }
+        });
+        @if($errors->any())
+            createModal.classList.remove('hidden'); createModal.classList.add('flex');
+        @endif
+
+        // -- Edit Modal --
+        const editModal = document.getElementById('editProjectModal');
+        document.getElementById('closeEditProjectModal').addEventListener('click', () => {
+            editModal.classList.add('hidden'); editModal.classList.remove('flex');
+        });
+        editModal.addEventListener('click', e => {
+            if (e.target === editModal) { editModal.classList.add('hidden'); editModal.classList.remove('flex'); }
+        });
     });
 
     function openEditProject(id, name, description, startDate, endDate, status) {
-        document.getElementById('editProjectForm').action = `/projects/${id}`;
+        const modal = document.getElementById('editProjectModal');
+        document.getElementById('editProjectForm').action = '/projects/' + id;
         document.getElementById('edit_name').value        = name;
         document.getElementById('edit_description').value = description;
         document.getElementById('edit_start_date').value  = startDate;
         document.getElementById('edit_end_date').value    = endDate;
         document.getElementById('edit_status').value      = status;
-        editModal.classList.remove('hidden');
-        editModal.classList.add('flex');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
 </script>
 @endsection

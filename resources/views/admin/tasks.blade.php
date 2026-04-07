@@ -24,7 +24,7 @@
             <div class="space-y-4">
                 <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
                 <nav class="space-y-2">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
                         Dashboard
                     </a>
@@ -44,10 +44,12 @@
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
                         Reports
                     </a>
+                    @if(auth()->user()->role === 'admin')
                     <button id="openAssignRoleModal" type="button" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">👥</span>
                         Assign Role
                     </button>
+                    @endif
                 </nav>
             </div>
         </aside>
@@ -76,15 +78,15 @@
                     </div>
                     <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
                         <p class="text-sm text-emerald-600">Completed</p>
-                        <p class="mt-2 text-3xl font-semibold text-emerald-700">{{ $tasks->where('progress', 100)->count() }}</p>
+                        <p class="mt-2 text-3xl font-semibold text-emerald-700">{{ $tasks->where('status', 'completed')->count() }}</p>
                     </div>
                     <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4">
                         <p class="text-sm text-amber-600">In progress</p>
-                        <p class="mt-2 text-3xl font-semibold text-amber-700">{{ $tasks->whereBetween('progress', [1, 99])->count() }}</p>
+                        <p class="mt-2 text-3xl font-semibold text-amber-700">{{ $tasks->where('status', 'in_progress')->count() }}</p>
                     </div>
                     <div class="rounded-2xl border border-rose-100 bg-rose-50 p-4">
-                        <p class="text-sm text-rose-600">Not started</p>
-                        <p class="mt-2 text-3xl font-semibold text-rose-700">{{ $tasks->where('progress', 0)->count() }}</p>
+                        <p class="text-sm text-rose-600">Pending</p>
+                        <p class="mt-2 text-3xl font-semibold text-rose-700">{{ $tasks->where('status', 'pending')->count() }}</p>
                     </div>
                 </div>
 
@@ -123,8 +125,8 @@
                         <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Status</label>
                         <select id="filterStatus" class="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
                             <option value="all">All Statuses</option>
-                            <option value="not-started">Not started</option>
-                            <option value="in-progress">In progress</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
                             <option value="completed">Completed</option>
                         </select>
                     </div>
@@ -138,7 +140,6 @@
                                 <th class="pb-4 pr-6 font-semibold text-slate-900">Task</th>
                                 <th class="pb-4 pr-6 font-semibold text-slate-900">Project</th>
                                 <th class="pb-4 pr-6 font-semibold text-slate-900">Assigned to</th>
-                                <th class="pb-4 pr-6 font-semibold text-slate-900">Progress</th>
                                 <th class="pb-4 pr-6 font-semibold text-slate-900">Status</th>
                                 <th class="pb-4 pr-6 font-semibold text-slate-900">Due date</th>
                             </tr>
@@ -146,15 +147,14 @@
                         <tbody class="divide-y divide-slate-200">
                             @foreach($tasks as $task)
                                 @php
-                                    $progress = $task->progress;
-                                    $statusLabel = $progress >= 100 ? 'completed' : ($progress > 0 ? 'in-progress' : 'not-started');
-                                    $assignee = $task->assignedTo?->name ?? 'Unassigned';
+                                    $taskStatus  = $task->progress >= 100 ? 'completed' : ($task->status ?? 'pending');
+                                    $assignee    = $task->assignedTo?->name ?? 'Unassigned';
                                     $projectName = $task->project?->name ?? 'None';
                                 @endphp
                                 <tr class="task-row hover:bg-slate-50"
                                     data-project="{{ $projectName }}"
                                     data-assignee="{{ $assignee }}"
-                                    data-status="{{ $statusLabel }}">
+                                    data-status="{{ $taskStatus }}">
                                     <td class="py-4 pr-6">
                                         <div class="font-semibold text-slate-900">{{ $task->title }}</div>
                                         @if($task->description)
@@ -173,29 +173,12 @@
                                         </div>
                                     </td>
                                     <td class="py-4 pr-6">
-                                        <div class="min-w-[110px]">
-                                            @if($progress >= 100)
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-bold">✓</span>
-                                                    <span class="text-xs font-semibold text-emerald-600">100%</span>
-                                                </div>
-                                            @else
-                                                <div class="mb-1 flex items-center justify-between">
-                                                    <span class="text-xs font-semibold {{ $progress > 0 ? 'text-sky-600' : 'text-slate-400' }}">{{ $progress }}%</span>
-                                                </div>
-                                                <div class="h-2 w-28 overflow-hidden rounded-full bg-slate-100">
-                                                    <div class="h-2 rounded-full {{ $progress > 0 ? 'bg-sky-500' : 'bg-slate-200' }}" style="width:{{ max(3, $progress) }}%"></div>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="py-4 pr-6">
-                                        @if($statusLabel === 'completed')
+                                        @if($taskStatus === 'completed')
                                             <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Completed</span>
-                                        @elseif($statusLabel === 'in-progress')
-                                            <span class="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">In progress</span>
+                                        @elseif($taskStatus === 'in_progress')
+                                            <span class="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">In Progress</span>
                                         @else
-                                            <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Not started</span>
+                                            <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Pending</span>
                                         @endif
                                     </td>
                                     <td class="py-4 pr-6 text-slate-700">
@@ -212,6 +195,7 @@
     </div>
 </div>
 
+@if(auth()->user()->role === 'admin')
 {{-- Assign Role Modal --}}
 <div id="assignRoleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
     <div class="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
@@ -243,6 +227,7 @@
         </form>
     </div>
 </div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -295,9 +280,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const modal = document.getElementById('assignRoleModal');
-    document.getElementById('openAssignRoleModal').addEventListener('click', () => modal.classList.remove('hidden'));
-    document.getElementById('closeAssignRoleModal').addEventListener('click', () => modal.classList.add('hidden'));
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    if (modal) {
+        document.getElementById('openAssignRoleModal').addEventListener('click', () => modal.classList.remove('hidden'));
+        document.getElementById('closeAssignRoleModal').addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    }
 });
 </script>
 @endsection

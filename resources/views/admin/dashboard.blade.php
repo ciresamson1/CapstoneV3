@@ -81,7 +81,7 @@
                 @endforeach
             </section>
 
-            <section class="mt-6 grid gap-6 xl:grid-cols-[0.75fr_0.5fr]">
+            <section class="mt-6">
                 <div class="rounded-3xl bg-white p-6 shadow-sm">
                     <div class="mb-6 flex items-center justify-between">
                         <div>
@@ -90,20 +90,20 @@
                         </div>
                         <span class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">Real-time</span>
                     </div>
-                    <div class="space-y-4">
+                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         @foreach($alerts as $alert)
                             <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                                <div class="flex items-center justify-between gap-4">
-                                    <div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
                                         <p class="text-sm font-semibold text-slate-900">{{ $alert['headline'] }}</p>
                                         <p class="mt-2 text-sm text-slate-600">{{ $alert['details'] }}</p>
                                     </div>
-                                    <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 {{ $alert['color'] === 'red' ? 'bg-rose-100 text-rose-700' : ($alert['color'] === 'yellow' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700') }}">{{ $alert['label'] }}</span>
+                                    <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] {{ $alert['color'] === 'red' ? 'bg-rose-100 text-rose-700' : ($alert['color'] === 'yellow' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700') }}">{{ $alert['label'] }}</span>
                                 </div>
                                 @if(isset($alert['items']) && is_iterable($alert['items']))
-                                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <div class="mt-4 space-y-2">
                                         @foreach($alert['items'] as $item)
-                                            <div class="rounded-3xl bg-white p-3 text-sm text-slate-600 shadow-sm">
+                                            <div class="rounded-2xl bg-white p-3 text-sm text-slate-600 shadow-sm">
                                                 <p class="font-semibold text-slate-900">{{ $item['project'] }}</p>
                                                 <p>{{ $item['count'] }} overdue task{{ $item['count'] === 1 ? '' : 's' }}</p>
                                             </div>
@@ -112,26 +112,6 @@
                                 @endif
                             </div>
                         @endforeach
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="rounded-3xl bg-white p-6 shadow-sm">
-                        <div class="flex items-center justify-between gap-4">
-                            <div>
-                                <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Team Workload Summary</p>
-                                <h3 class="mt-2 text-xl font-semibold text-slate-900">Fast risk monitoring</h3>
-                            </div>
-                            <span class="rounded-3xl bg-slate-100 px-3 py-2 text-sm text-slate-700">Balance</span>
-                        </div>
-                        <p class="mt-4 text-sm text-slate-600">This panel helps you keep a pulse on team capacity, task pressure, and workload balance across projects.</p>
-                    </div>
-                    <div class="rounded-3xl bg-white p-6 shadow-sm">
-                        <h3 class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Client Activity</h3>
-                        <div class="mt-5 space-y-4">
-                            <p class="text-7xl font-bold text-slate-900">{{ $clientActivity['pendingApprovals'] }}</p>
-                            <p class="text-sm text-slate-600">Pending approvals requiring client confirmation.</p>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -157,7 +137,6 @@
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Project Name</th>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Progress</th>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Status</th>
-                                <th class="pb-4 pr-8 font-semibold text-slate-900">Risk</th>
                                 <th class="pb-4 font-semibold text-slate-900">Team Load</th>
                             </tr>
                         </thead>
@@ -167,22 +146,22 @@
                                     <tr class="hover:bg-slate-50">
                                         <td class="py-5 pr-8 font-medium text-slate-900">{{ $project['name'] }}</td>
                                         <td class="py-5 pr-8">
-                                            <div class="w-full rounded-full bg-slate-100">
-                                                <div class="rounded-full bg-slate-900 text-[11px] text-white" style="width: {{ $project['progress'] }}%; padding: .45rem .6rem;">{{ $project['progress'] }}%</div>
+                                            <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
+                                                @if($project['progress'] > 0)
+                                                    <div class="absolute inset-y-0 left-0 rounded-full bg-violet-500 transition-all" style="width: {{ $project['progress'] }}%"></div>
+                                                @endif
+                                                <span class="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-700">{{ $project['progress'] }}%</span>
                                             </div>
                                         </td>
                                         <td class="py-5 pr-8 text-slate-700">
                                             <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $project['status'] === 'On Track' ? 'bg-emerald-100 text-emerald-700' : ($project['status'] === 'At Risk' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">{{ $project['status'] }}</span>
-                                        </td>
-                                        <td class="py-5 pr-8 text-slate-700">
-                                            <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $project['risk'] === 'Low' ? 'bg-emerald-100 text-emerald-700' : ($project['risk'] === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">{{ $project['risk'] }}</span>
                                         </td>
                                         <td class="py-5 text-slate-700">{{ $project['load'] }}</td>
                                     </tr>
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="5" class="py-6 text-center text-sm text-slate-500">Project health data is unavailable.</td>
+                                    <td colspan="4" class="py-6 text-center text-sm text-slate-500">Project health data is unavailable.</td>
                                 </tr>
                             @endif
                         </tbody>
@@ -198,12 +177,23 @@
                             <p class="text-sm text-slate-500">Live timeline view of task windows, deadlines and project ownership.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <select id="projectFilter" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
-                                <option value="all">All Projects</option>
-                                @foreach(collect($ganttData)->pluck('project')->unique() as $projectName)
-                                    <option value="{{ $projectName }}">{{ $projectName }}</option>
-                                @endforeach
-                            </select>
+                            {{-- Project search --}}
+                            <div class="relative" id="projectSearchWrap">
+                                <input type="text" id="projectSearchInput"
+                                    placeholder="Search project…"
+                                    autocomplete="off"
+                                    class="w-52 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                                <input type="hidden" id="projectFilter" value="">
+                                <ul id="projectSuggestions"
+                                    class="absolute left-0 top-full z-30 mt-1 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                                    @foreach(collect($ganttData)->pluck('project')->unique()->values() as $projectName)
+                                        <li data-value="{{ $projectName }}"
+                                            class="cursor-pointer px-4 py-2.5 text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700">
+                                            {{ $projectName }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
                             <select id="userFilter" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
                                 <option value="all">All Users</option>
                                 @foreach(collect($ganttData)->pluck('assigned_to')->unique() as $userName)
@@ -453,13 +443,13 @@
     }
 
     function updateGanttProjectInfo(selectedProject) {
-        const projectItem = selectedProject === 'all'
+        const projectItem = (!selectedProject || selectedProject === 'all')
             ? getUniqueGanttProject()
             : ganttData.find(item => item.project === selectedProject);
 
         if (!projectItem) {
-            ganttProjectTitleEl.textContent = 'All Projects';
-            ganttProjectDescriptionEl.textContent = 'Timeline across all projects.';
+            ganttProjectTitleEl.textContent = selectedProject && selectedProject !== 'all' ? selectedProject : '';
+            ganttProjectDescriptionEl.textContent = '';
             return;
         }
 
@@ -469,16 +459,16 @@
 
     function filterGantt() {
         const project = document.getElementById('projectFilter').value;
-        const user = document.getElementById('userFilter').value;
-        const zoom = parseInt(document.getElementById('zoomLevel').value, 10);
+        const user    = document.getElementById('userFilter').value;
+        const zoom    = parseInt(document.getElementById('zoomLevel').value, 10);
 
         const filtered = ganttData.filter(item => {
-            const projectMatch = project === 'all' || item.project === project;
-            const userMatch = user === 'all' || item.assigned_to === user;
+            const projectMatch = !project || item.project === project;
+            const userMatch    = user === 'all' || item.assigned_to === user;
             return projectMatch && userMatch;
         });
 
-        updateGanttProjectInfo(project);
+        updateGanttProjectInfo(project || 'all');
         createGanttChart(filtered, zoom);
     }
 
@@ -496,12 +486,61 @@
             });
     }
 
-    document.getElementById('projectFilter').addEventListener('change', filterGantt);
+    // Project suggestive search
+    const projectSearchInput = document.getElementById('projectSearchInput');
+    const projectFilterHidden = document.getElementById('projectFilter');
+    const projectSuggestions = document.getElementById('projectSuggestions');
+    const projectItems = projectSuggestions.querySelectorAll('li');
+
+    projectSearchInput.addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        let hasVisible = false;
+        projectItems.forEach(li => {
+            const match = li.dataset.value.toLowerCase().includes(q);
+            li.style.display = match ? '' : 'none';
+            if (match) hasVisible = true;
+        });
+        projectSuggestions.classList.toggle('hidden', !q || !hasVisible);
+        // Clear selection if user clears the input
+        if (!q) {
+            projectFilterHidden.value = '';
+            filterGantt();
+        }
+    });
+
+    projectItems.forEach(li => {
+        li.addEventListener('click', function () {
+            projectSearchInput.value  = this.dataset.value;
+            projectFilterHidden.value = this.dataset.value;
+            projectSuggestions.classList.add('hidden');
+            filterGantt();
+        });
+    });
+
+    document.addEventListener('click', e => {
+        if (!document.getElementById('projectSearchWrap').contains(e.target)) {
+            projectSuggestions.classList.add('hidden');
+        }
+    });
+
     document.getElementById('userFilter').addEventListener('change', filterGantt);
     document.getElementById('zoomLevel').addEventListener('change', filterGantt);
 
     updateGanttProjectInfo('all');
     createGanttChart(ganttData, 7);
+
+    // Auto-select the most recently created project
+    if (ganttData.length > 0) {
+        const mostRecent = ganttData.reduce((a, b) =>
+            (a.project_created_at ?? 0) >= (b.project_created_at ?? 0) ? a : b
+        );
+        if (mostRecent.project) {
+            projectSearchInput.value  = mostRecent.project;
+            projectFilterHidden.value = mostRecent.project;
+            filterGantt();
+        }
+    }
+
     createTeamChart();
 
     // Refresh KPI cards every 45 seconds

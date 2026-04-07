@@ -37,9 +37,32 @@ class TaskCommentController extends Controller
             'parent_id' => null
         ]);
 
-        broadcast(new TaskCommentCreated($comment))->toOthers();
+        try {
+            broadcast(new TaskCommentCreated($comment))->toOthers();
+        } catch (\Throwable $e) {
+            // Broadcast server unavailable — comment still saved
+        }
 
-        ActivityLog::record('posted_comment', 'Posted a comment on task "' . $task->title . '"', $task);
+        $commentPreview = $comment->message
+            ? '"' . \Illuminate\Support\Str::limit($comment->message, 80) . '"'
+            : '(attachment)';
+        ActivityLog::record(
+            'posted_comment',
+            'Commented on task "' . $task->title . '": ' . $commentPreview,
+            $task
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id'         => $comment->id,
+                'task_id'    => $comment->task_id,
+                'user_id'    => $comment->user_id,
+                'user_name'  => auth()->user()->name,
+                'message'    => $comment->message,
+                'attachment' => $comment->attachment,
+                'created_at' => $comment->created_at->toISOString(),
+            ]);
+        }
 
         return back();
     }
@@ -64,6 +87,7 @@ class TaskCommentController extends Controller
             return [
                 'id' => $comment->id,
                 'task_id' => $comment->task_id,
+                'user_id'   => $comment->user_id,
                 'user_name' => $comment->user->name,
                 'user_role' => $comment->user->role,
                 'message' => $comment->message,

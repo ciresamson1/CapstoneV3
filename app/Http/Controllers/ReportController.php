@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Project;
+use App\Models\Task;
 use App\Models\ProgressLog;
 use App\Models\TaskComment;
 use App\Models\CommentReaction;
@@ -91,7 +93,13 @@ class ReportController extends Controller
             });
 
         // ── CLIENTS ───────────────────────────────────────────────────────
+        // Only clients assigned to at least one project, or who have commented
+        $assignedClientIds  = Project::whereNotNull('client_id')->pluck('client_id');
+        $commentingClientIds = TaskComment::whereNotNull('user_id')->pluck('user_id');
+        $clientUserIds = $assignedClientIds->merge($commentingClientIds)->unique();
+
         $clientData = User::where('role', 'client')
+            ->whereIn('id', $clientUserIds)
             ->get()
             ->map(function ($client) {
                 $totalComments = TaskComment::where('user_id', $client->id)->count();
@@ -111,19 +119,152 @@ class ReportController extends Controller
                 // Friction score: high revisions + low engagement = high friction (0–10)
                 $frictionScore = min(10, round($revisionRequests * 0.5 + ($engagementRate < 20 ? 3 : 1)));
 
-                // Reactions on this client's own comments
-                $clientCommentIds = TaskComment::where('user_id', $client->id)->pluck('id');
-                $thumbsUp   = CommentReaction::whereIn('comment_id', $clientCommentIds)->where('type', 'up')->count();
-                $thumbsDown = CommentReaction::whereIn('comment_id', $clientCommentIds)->where('type', 'down')->count();
+                // Reactions given BY the client
+                $thumbsUp   = CommentReaction::where('user_id', $client->id)->where('type', 'up')->count();
+                $thumbsDown = CommentReaction::where('user_id', $client->id)->where('type', 'down')->count();
+
+                $totalProjects = Project::where('client_id', $client->id)->count();
 
                 return compact(
-                    'client', 'totalComments', 'totalReplies',
+                    'client', 'totalProjects', 'totalComments', 'totalReplies',
                     'rootComments', 'engagementRate', 'revisionRequests', 'frictionScore',
                     'thumbsUp', 'thumbsDown'
                 );
             });
 
         return view('admin.report', compact('pmData', 'dmData', 'clientData'));
+    }
+
+    public function dmReport()
+    {
+        $today        = Carbon::today();
+        $myProjectIds = Task::where('assigned_to', auth()->id())->pluck('project_id')->unique();
+        $myTaskIds    = Task::where('assigned_to', auth()->id())->pluck('id');
+
+        // Clients assigned to DM's projects OR who commented on DM's tasks
+        $assignedClientIds   = Project::whereIn('id', $myProjectIds)->whereNotNull('client_id')->pluck('client_id');
+        $commentingClientIds = TaskComment::whereIn('task_id', $myTaskIds)->pluck('user_id');
+        $clientUserIds       = $assignedClientIds->merge($commentingClientIds)->unique();
+
+        $clientData = User::where('role', 'client')
+            ->whereIn('id', $clientUserIds)
+            ->get()
+            ->map(function ($client) use ($myTaskIds, $myProjectIds) {
+                $totalComments = TaskComment::where('user_id', $client->id)->whereIn('task_id', $myTaskIds)->count();
+                $totalReplies  = TaskComment::where('user_id', $client->id)->whereIn('task_id', $myTaskIds)->whereNotNull('parent_id')->count();
+                $rootComments  = TaskComment::where('user_id', $client->id)->whereIn('task_id', $myTaskIds)->whereNull('parent_id')->count();
+
+                $engagementRate = $totalComments > 0 ? round(($totalReplies / $totalComments) * 100) : 0;
+
+                $revisionRequests = TaskComment::where('user_id', $client->id)
+                    ->whereIn('task_id', $myTaskIds)
+                    ->whereNotNull('parent_id')
+                    ->distinct('parent_id')
+                    ->count('parent_id');
+
+                $frictionScore = min(10, round($revisionRequests * 0.5 + ($engagementRate < 20 ? 3 : 1)));
+
+                $thumbsUp   = CommentReaction::where('user_id', $client->id)->where('type', 'up')->count();
+                $thumbsDown = CommentReaction::where('user_id', $client->id)->where('type', 'down')->count();
+
+                $totalProjects = Project::where('client_id', $client->id)->whereIn('id', $myProjectIds)->count();
+
+                return compact(
+                    'client', 'totalProjects', 'totalComments', 'totalReplies',
+                    'rootComments', 'engagementRate', 'revisionRequests', 'frictionScore',
+                    'thumbsUp', 'thumbsDown'
+                );
+            });
+
+        return view('dm.report', compact('clientData'));
+    }
+
+    public function pmReport()
+    {
+        $today        = Carbon::today();
+        $myProjectIds = Project::where('created_by', auth()->id())->pluck('id');
+        $myTaskIds    = Task::whereIn('project_id', $myProjectIds)->pluck('id');
+
+        // ── DIGITAL MARKETERS (only those assigned to tasks in PM's projects) ─
+        $dmUserIds = Task::whereIn('project_id', $myProjectIds)
+            ->whereNotNull('assigned_to')
+            ->pluck('assigned_to')
+            ->unique();
+
+        $dmData = User::where('role', 'dm')
+            ->whereIn('id', $dmUserIds)
+            ->get()
+            ->map(function ($dm) use ($today, $myProjectIds) {
+                $tasks        = Task::where('assigned_to', $dm->id)
+                    ->whereIn('project_id', $myProjectIds)
+                    ->get();
+                $totalTasks   = $tasks->count();
+                $completed    = $tasks->where('progress', 100)->count();
+                $overdueTasks = $tasks->filter(
+                    fn($t) => $t->end_date && Carbon::parse($t->end_date)->lt($today) && $t->progress < 100
+                )->count();
+                $completionRate = $totalTasks > 0 ? round(($completed / $totalTasks) * 100) : 0;
+
+                $recentCompleted = $tasks->filter(
+                    fn($t) => $t->progress >= 100 && $t->updated_at && $t->updated_at->gte($today->copy()->subDays(30))
+                )->count();
+
+                $taskIds       = $tasks->pluck('id');
+                $totalComments = TaskComment::where('user_id', $dm->id)->whereIn('task_id', $taskIds)->count();
+                $totalReplies  = TaskComment::where('user_id', $dm->id)->whereIn('task_id', $taskIds)->whereNotNull('parent_id')->count();
+                $revisionRate  = $totalComments > 0 ? round(($totalReplies / $totalComments) * 100) : 0;
+                $qualityScore  = $totalTasks > 0
+                    ? max(0, min(100, round((($completed - $totalReplies) / $totalTasks) * 100)))
+                    : 0;
+
+                return compact(
+                    'dm', 'totalTasks', 'completed', 'completionRate',
+                    'overdueTasks', 'recentCompleted',
+                    'totalComments', 'totalReplies', 'revisionRate', 'qualityScore'
+                );
+            });
+
+        // ── CLIENTS (those assigned to PM's projects OR who commented on PM's tasks) ───
+        $assignedClientIds = Project::where('created_by', auth()->id())
+            ->whereNotNull('client_id')
+            ->pluck('client_id');
+
+        $commentingClientIds = TaskComment::whereIn('task_id', $myTaskIds)
+            ->pluck('user_id');
+
+        $clientUserIds = $assignedClientIds->merge($commentingClientIds)->unique();
+
+        $clientData = User::where('role', 'client')
+            ->whereIn('id', $clientUserIds)
+            ->get()
+            ->map(function ($client) use ($myTaskIds, $myProjectIds) {
+                $totalComments = TaskComment::where('user_id', $client->id)->whereIn('task_id', $myTaskIds)->count();
+                $totalReplies  = TaskComment::where('user_id', $client->id)->whereIn('task_id', $myTaskIds)->whereNotNull('parent_id')->count();
+                $rootComments  = TaskComment::where('user_id', $client->id)->whereIn('task_id', $myTaskIds)->whereNull('parent_id')->count();
+
+                $engagementRate = $totalComments > 0 ? round(($totalReplies / $totalComments) * 100) : 0;
+
+                $revisionRequests = TaskComment::where('user_id', $client->id)
+                    ->whereIn('task_id', $myTaskIds)
+                    ->whereNotNull('parent_id')
+                    ->distinct('parent_id')
+                    ->count('parent_id');
+
+                $frictionScore = min(10, round($revisionRequests * 0.5 + ($engagementRate < 20 ? 3 : 1)));
+
+                $thumbsUp   = CommentReaction::where('user_id', $client->id)->where('type', 'up')->count();
+                $thumbsDown = CommentReaction::where('user_id', $client->id)->where('type', 'down')->count();
+
+                $totalProjects = Project::where('client_id', $client->id)->whereIn('id', $myProjectIds)->count();
+
+                return compact(
+                    'client', 'totalProjects', 'totalComments', 'totalReplies',
+                    'rootComments', 'engagementRate', 'revisionRequests', 'frictionScore',
+                    'thumbsUp', 'thumbsDown'
+                );
+            });
+
+        return view('pm.report', compact('dmData', 'clientData'));
     }
 
     public function pdf($userId)
@@ -211,10 +352,13 @@ class ReportController extends Controller
             $revisionRequests = TaskComment::where('user_id', $user->id)->whereNotNull('parent_id')->distinct('parent_id')->count('parent_id');
             $frictionScore   = min(10, round($revisionRequests * 0.5 + ($engagementRate < 20 ? 3 : 1)));
 
-            $kpis = compact('totalComments', 'totalReplies', 'rootComments',
+            $projects      = Project::where('client_id', $user->id)->with(['creator', 'tasks'])->get();
+            $totalProjects = $projects->count();
+
+            $kpis = compact('totalProjects', 'totalComments', 'totalReplies', 'rootComments',
                             'engagementRate', 'revisionRequests', 'frictionScore');
 
-            // Show unique projects commented on + tasks
+            // Comment activity table
             $tasks = $userComments->map(function ($c) {
                 return [
                     'project' => optional(optional($c->task)->project)->name ?? '—',

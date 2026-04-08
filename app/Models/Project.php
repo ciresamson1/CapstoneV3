@@ -12,12 +12,18 @@ class Project extends Model
         'start_date',
         'end_date',
         'status',
-        'created_by'
+        'created_by',
+        'client_id',
     ];
 
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(User::class, 'client_id');
     }
 
     public function tasks()

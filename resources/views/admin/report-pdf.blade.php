@@ -317,6 +317,11 @@
             </div>
         @elseif($role === 'client')
             <div class="kpi-cell">
+                <div class="kpi-label">Total Projects</div>
+                <div class="kpi-value" style="color:#0369a1;">{{ $kpis['totalProjects'] }}</div>
+                <div class="kpi-note">assigned projects</div>
+            </div>
+            <div class="kpi-cell">
                 <div class="kpi-label">Total Comments</div>
                 <div class="kpi-value">{{ $kpis['totalComments'] }}</div>
                 <div class="kpi-note">messages sent</div>
@@ -349,13 +354,14 @@
         @endif
     </div>
 
-    {{-- ── PROJECTS TABLE (PM only) ── --}}
-    @if($role === 'pm' && $projects->isNotEmpty())
-        <p class="section-title" style="margin-top:8px;">Projects Overview</p>
+    {{-- ── PROJECTS TABLE (PM or Client) ── --}}
+    @if(($role === 'pm' || $role === 'client') && $projects->isNotEmpty())
+        <p class="section-title" style="margin-top:8px;">{{ $role === 'client' ? 'Assigned Projects' : 'Projects Overview' }}</p>
         <table class="data-table" style="margin-bottom:24px;">
             <thead>
                 <tr>
                     <th>Project Name</th>
+                    @if($role === 'client')<th>Project Manager</th>@endif
                     <th>Status</th>
                     <th>Start Date</th>
                     <th>End Date</th>
@@ -374,6 +380,7 @@
                     @endphp
                     <tr>
                         <td style="font-weight:600; color:#0f172a;">{{ $project->name }}</td>
+                        @if($role === 'client')<td>{{ optional($project->creator)->name ?? '—' }}</td>@endif
                         <td><span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span></td>
                         <td>{{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('M d, Y') : '—' }}</td>
                         <td>{{ $project->end_date  ? \Carbon\Carbon::parse($project->end_date)->format('M d, Y')  : '—' }}</td>

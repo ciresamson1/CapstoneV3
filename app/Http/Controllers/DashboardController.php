@@ -21,7 +21,314 @@ class DashboardController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->route('pm.dashboard');
+        if ($role === 'pm') {
+            return redirect()->route('pm.dashboard');
+        }
+
+        if ($role === 'dm') {
+            return redirect()->route('dm.dashboard');
+        }
+
+        if ($role === 'client') {
+            return redirect()->route('client.dashboard');
+        }
+
+        // other roles have no dedicated dashboard
+        abort(403, 'No dashboard available for your role.');
+    }
+
+    public function dmIndex()
+    {
+        $today = Carbon::today();
+
+        // Projects that have at least one task assigned to this DM
+        $myProjectIds = Task::where('assigned_to', auth()->id())
+            ->pluck('project_id')
+            ->unique();
+
+        $kpiCards        = $this->buildDmKpiCards($today, $myProjectIds);
+        $alerts          = $this->buildDmAlerts($today, $myProjectIds);
+        $projectHealth   = $this->buildProjectHealth($today, $myProjectIds);
+        $ganttData       = $this->buildGanttData($today, $myProjectIds);
+        $teamPerformance = $this->buildTeamPerformance($today, $myProjectIds);
+        $clientActivity  = $this->buildClientActivity($myProjectIds);
+
+        return view('dm.dashboard', compact(
+            'kpiCards', 'alerts', 'projectHealth', 'ganttData', 'teamPerformance', 'clientActivity'
+        ));
+    }
+
+    private function buildDmKpiCards(Carbon $today, $myProjectIds)
+    {
+        $myTasks      = Task::where('assigned_to', auth()->id());
+        $totalTasks   = $myTasks->count();
+        $completedTasks = Task::where('assigned_to', auth()->id())->where('progress', 100)->count();
+        $overdueTasks = Task::where('assigned_to', auth()->id())
+            ->whereDate('end_date', '<', $today)
+            ->where('progress', '<', 100)
+            ->count();
+        $nearDeadline = Task::where('assigned_to', auth()->id())
+            ->whereBetween('end_date', [$today, $today->copy()->addDays(3)])
+            ->where('progress', '<', 100)
+            ->count();
+        $completionRate = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+        $activeProjects = Project::whereIn('id', $myProjectIds)->where('status', '!=', 'completed')->count();
+
+        return [
+            [
+                'title' => 'My Overdue Tasks',
+                'value' => $overdueTasks,
+                'color' => $overdueTasks > 0 ? 'red' : 'green',
+                'url'   => route('projects.index'),
+                'note'  => 'Needs immediate attention',
+            ],
+            [
+                'title' => 'Tasks Near Deadline',
+                'value' => $nearDeadline,
+                'color' => $nearDeadline > 0 ? 'yellow' : 'green',
+                'url'   => route('projects.index'),
+                'note'  => 'Due within 3 days',
+            ],
+            [
+                'title' => 'Active Projects',
+                'value' => $activeProjects,
+                'color' => 'green',
+                'url'   => route('projects.index'),
+                'note'  => 'Projects you are involved in',
+            ],
+            [
+                'title' => 'My Completion Rate',
+                'value' => $completionRate . '%',
+                'color' => $completionRate >= 80 ? 'green' : ($completionRate >= 50 ? 'yellow' : 'red'),
+                'url'   => route('dm.dashboard'),
+                'note'  => 'Overall task delivery',
+            ],
+            [
+                'title' => 'Tasks Assigned',
+                'value' => $totalTasks,
+                'color' => 'blue',
+                'url'   => route('dm.dashboard'),
+                'note'  => $completedTasks . ' completed',
+            ],
+            [
+                'title' => 'Tasks Completed',
+                'value' => $completedTasks,
+                'color' => 'green',
+                'url'   => route('dm.dashboard'),
+                'note'  => 'Done so far',
+            ],
+        ];
+    }
+
+    private function buildDmAlerts(Carbon $today, $myProjectIds)
+    {
+        $overdueGrouped = Task::with('project')
+            ->where('assigned_to', auth()->id())
+            ->whereDate('end_date', '<', $today)
+            ->where('progress', '<', 100)
+            ->get()
+            ->groupBy(fn ($task) => $task->project?->name ?? 'Unassigned')
+            ->map(fn ($tasks, $projectName) => [
+                'project' => $projectName,
+                'count'   => $tasks->count(),
+                'summary' => $tasks->pluck('title')->take(3)->implode(', '),
+            ])
+            ->values();
+
+        $clientResponseCount = TaskComment::whereHas('user', fn ($q) => $q->where('role', 'client'))
+            ->whereHas('task', fn ($q) => $q->where('assigned_to', auth()->id())->where('progress', '<', 100))
+            ->count();
+
+        $nearDeadlineCount = Task::where('assigned_to', auth()->id())
+            ->whereBetween('end_date', [$today, $today->copy()->addDays(7)])
+            ->where('progress', '<', 100)
+            ->count();
+
+        $myTaskIds = Task::where('assigned_to', auth()->id())->pluck('id');
+        $recentUpdates = ProgressLog::with('user')
+            ->where('type', 'task')
+            ->whereIn('reference_id', $myTaskIds)
+            ->latest()
+            ->take(4)
+            ->get()
+            ->map(fn ($log) => [
+                'title'   => Str::title($log->type) . ' update',
+                'details' => sprintf('%s → %s by %s', $log->old_progress, $log->new_progress, $log->user?->name ?? 'System'),
+                'time'    => $log->created_at->diffForHumans(),
+            ]);
+
+        return [
+            [
+                'label'    => 'High',
+                'color'    => 'red',
+                'headline' => 'My overdue tasks by project',
+                'details'  => $overdueGrouped->map(fn ($g) => $g['project'] . ' (' . $g['count'] . ')')->take(4)->implode(', ') ?: 'No overdue tasks',
+                'items'    => $overdueGrouped,
+            ],
+            [
+                'label'    => 'Medium',
+                'color'    => 'yellow',
+                'headline' => 'Client response needed',
+                'details'  => $clientResponseCount . ' of my tasks waiting on client feedback',
+            ],
+            [
+                'label'    => 'Medium',
+                'color'    => 'yellow',
+                'headline' => 'Upcoming deadlines (7 days)',
+                'details'  => $nearDeadlineCount . ' task(s) due within the next 7 days',
+            ],
+            [
+                'label'    => 'Info',
+                'color'    => 'blue',
+                'headline' => 'Recent progress updates',
+                'details'  => $recentUpdates->map(fn ($item) => $item['title'] . ': ' . $item['details'])->take(3)->implode(' · ') ?: 'No recent updates',
+            ],
+        ];
+    }
+
+    public function clientIndex()
+    {
+        $today        = Carbon::today();
+        $myProjectIds = Project::where('client_id', auth()->id())->pluck('id');
+
+        $kpiCards      = $this->buildClientKpiCards($today, $myProjectIds);
+        $alerts        = $this->buildClientAlerts($today, $myProjectIds);
+        $projectHealth = $this->buildProjectHealth($today, $myProjectIds);
+        $ganttData     = $this->buildGanttData($today, $myProjectIds);
+
+        return view('client.dashboard', compact(
+            'kpiCards', 'alerts', 'projectHealth', 'ganttData'
+        ));
+    }
+
+    private function buildClientKpiCards(Carbon $today, $myProjectIds)
+    {
+        $totalProjects   = $myProjectIds->count();
+        $activeProjects  = Project::whereIn('id', $myProjectIds)->where('status', 'active')->count();
+        $totalTasks      = Task::whereIn('project_id', $myProjectIds)->count();
+        $completedTasks  = Task::whereIn('project_id', $myProjectIds)
+            ->where(function ($q) {
+                $q->where('status', 'completed')->orWhere('progress', 100);
+            })
+            ->count();
+        $inProgressTasks = Task::whereIn('project_id', $myProjectIds)
+            ->where(function ($q) {
+                $q->where('status', 'in_progress')
+                  ->orWhereBetween('progress', [1, 99]);
+            })
+            ->count();
+        $overdueTasks    = Task::whereIn('project_id', $myProjectIds)
+            ->whereDate('end_date', '<', $today)
+            ->where('status', '!=', 'completed')
+            ->where('progress', '<', 100)
+            ->count();
+        $completionRate  = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+
+        return [
+            [
+                'title' => 'My Projects',
+                'value' => $totalProjects,
+                'color' => 'blue',
+                'url'   => route('client.projects'),
+                'note'  => $activeProjects . ' currently active',
+            ],
+            [
+                'title' => 'Active Projects',
+                'value' => $activeProjects,
+                'color' => 'green',
+                'url'   => route('client.projects'),
+                'note'  => 'Currently in progress',
+            ],
+            [
+                'title' => 'Tasks In Progress',
+                'value' => $inProgressTasks,
+                'color' => 'yellow',
+                'url'   => route('client.tasks.index'),
+                'note'  => 'Currently being worked on',
+            ],
+            [
+                'title' => 'Overdue Tasks',
+                'value' => $overdueTasks,
+                'color' => $overdueTasks > 0 ? 'red' : 'green',
+                'url'   => route('client.tasks.index'),
+                'note'  => 'Past due date',
+            ],
+            [
+                'title' => 'Overall Completion',
+                'value' => $completionRate . '%',
+                'color' => $completionRate >= 80 ? 'green' : ($completionRate >= 50 ? 'yellow' : 'red'),
+                'url'   => route('client.dashboard'),
+                'note'  => $completedTasks . ' of ' . $totalTasks . ' tasks done',
+            ],
+            [
+                'title' => 'Total Tasks',
+                'value' => $totalTasks,
+                'color' => 'blue',
+                'url'   => route('client.tasks.index'),
+                'note'  => 'Across all your projects',
+            ],
+        ];
+    }
+
+    private function buildClientAlerts(Carbon $today, $myProjectIds)
+    {
+        $overdueProjects = Project::whereIn('id', $myProjectIds)
+            ->where('status', '!=', 'completed')
+            ->whereDate('end_date', '<', $today)
+            ->get()
+            ->map(fn ($p) => ['project' => $p->name, 'count' => 1, 'summary' => 'Past end date'])
+            ->values();
+
+        $nearDeadlineCount = Project::whereIn('id', $myProjectIds)
+            ->whereBetween('end_date', [$today, $today->copy()->addDays(14)])
+            ->where('status', '!=', 'completed')
+            ->count();
+
+        $overdueTasks = Task::whereIn('project_id', $myProjectIds)
+            ->whereDate('end_date', '<', $today)
+            ->where('progress', '<', 100)
+            ->count();
+
+        $recentComments = TaskComment::whereHas('task', fn ($q) => $q->whereIn('project_id', $myProjectIds))
+            ->with(['user', 'task.project'])
+            ->latest()
+            ->take(3)
+            ->get()
+            ->map(fn ($c) => [
+                'title'   => ($c->user?->name ?? 'Team') . ' on "' . Str::limit($c->task?->title ?? '', 30) . '"',
+                'details' => Str::limit($c->message, 80),
+                'time'    => $c->created_at->diffForHumans(),
+            ]);
+
+        return [
+            [
+                'label'    => 'High',
+                'color'    => 'red',
+                'headline' => 'Overdue projects',
+                'details'  => $overdueProjects->isNotEmpty()
+                    ? $overdueProjects->pluck('project')->take(4)->implode(', ')
+                    : 'All projects are on schedule',
+                'items'    => $overdueProjects,
+            ],
+            [
+                'label'    => 'Medium',
+                'color'    => 'yellow',
+                'headline' => 'Upcoming project deadlines',
+                'details'  => $nearDeadlineCount . ' project(s) ending within the next 14 days',
+            ],
+            [
+                'label'    => 'Medium',
+                'color'    => 'yellow',
+                'headline' => 'Overdue tasks',
+                'details'  => $overdueTasks . ' task(s) past their due date across your projects',
+            ],
+            [
+                'label'    => 'Info',
+                'color'    => 'blue',
+                'headline' => 'Recent team activity',
+                'details'  => $recentComments->map(fn ($c) => $c['title'])->implode(' · ') ?: 'No recent comments',
+            ],
+        ];
     }
 
     public function index()
@@ -73,14 +380,14 @@ class DashboardController extends Controller
                 'title' => 'Overdue Tasks',
                 'value' => $overdueTasks,
                 'color' => $overdueTasks > 0 ? 'red' : 'green',
-                'url'   => route('admin.tasks.index'),
+                'url'   => route('pm.tasks.index'),
                 'note'  => 'Needs immediate attention',
             ],
             [
                 'title' => 'Tasks Near Deadline',
                 'value' => $nearDeadlineTasks,
                 'color' => $nearDeadlineTasks > 0 ? 'yellow' : 'green',
-                'url'   => route('admin.tasks.index'),
+                'url'   => route('pm.tasks.index'),
                 'note'  => 'Due within 3 days',
             ],
             [

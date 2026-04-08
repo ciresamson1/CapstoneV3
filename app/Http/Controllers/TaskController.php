@@ -22,6 +22,50 @@ class TaskController extends Controller
         return view('admin.tasks', compact('tasks', 'projects', 'users'));
     }
 
+    public function clientIndex()
+    {
+        $myProjectIds = Project::where('client_id', auth()->id())->pluck('id');
+
+        $tasks = Task::with(['project', 'assignedTo'])
+            ->whereIn('project_id', $myProjectIds)
+            ->orderBy('end_date')
+            ->get();
+
+        $projects = Project::whereIn('id', $myProjectIds)->orderBy('name')->pluck('name', 'id');
+        $users    = User::orderBy('name')->pluck('name', 'id');
+
+        return view('client.tasks', compact('tasks', 'projects', 'users'));
+    }
+
+    public function dmIndex()
+    {
+        $tasks = Task::with(['project', 'assignedTo'])
+            ->where('assigned_to', auth()->id())
+            ->orderBy('end_date')
+            ->get();
+
+        $myProjectIds = $tasks->pluck('project_id')->unique();
+        $projects = Project::whereIn('id', $myProjectIds)->orderBy('name')->pluck('name', 'id');
+        $users    = User::orderBy('name')->pluck('name', 'id');
+
+        return view('dm.tasks', compact('tasks', 'projects', 'users'));
+    }
+
+    public function pmIndex()
+    {
+        $myProjectIds = Project::where('created_by', auth()->id())->pluck('id');
+
+        $tasks = Task::with(['project', 'assignedTo'])
+            ->whereIn('project_id', $myProjectIds)
+            ->orderBy('end_date')
+            ->get();
+
+        $projects = Project::whereIn('id', $myProjectIds)->orderBy('name')->pluck('name', 'id');
+        $users    = User::orderBy('name')->pluck('name', 'id');
+
+        return view('pm.tasks', compact('tasks', 'projects', 'users'));
+    }
+
     public function create($projectId)
     {
         $project = Project::findOrFail($projectId);
@@ -38,7 +82,7 @@ class TaskController extends Controller
             'end_date'   => 'required|date|after_or_equal:start_date',
         ]);
 
-        Task::create([
+        $task = Task::create([
             'project_id'  => $projectId,
             'title'       => $request->title,
             'description' => $request->description,
@@ -50,7 +94,7 @@ class TaskController extends Controller
         ]);
 
         $project = Project::find($projectId);
-        ActivityLog::record('created_task', 'Created task "' . $request->title . '" in project "' . ($project?->name ?? 'Unknown') . '"');
+        ActivityLog::record('created_task', 'Created task "' . $request->title . '" in project "' . ($project?->name ?? 'Unknown') . '"', $task);
 
         return redirect()->route('projects.show', $projectId)->with('task_created', 'Task created successfully.');
     }
@@ -76,7 +120,7 @@ class TaskController extends Controller
         $task->save();
 
         $label = $task->progress == 100 ? 'completed' : 'reopened';
-        ActivityLog::record('updated_task', 'Marked task "' . $task->title . '" as ' . $label);
+        ActivityLog::record('updated_task', 'Marked task "' . $task->title . '" as ' . $label, $task);
 
         return response()->json(['status' => 'ok', 'progress' => $task->progress]);
     }
@@ -103,7 +147,7 @@ class TaskController extends Controller
             'status'      => $request->status,
         ]);
 
-        ActivityLog::record('updated_task', 'Updated task "' . $task->title . '"');
+        ActivityLog::record('updated_task', 'Updated task "' . $task->title . '"', $task);
 
         return redirect()->back()->with('status', 'Task updated.');
     }

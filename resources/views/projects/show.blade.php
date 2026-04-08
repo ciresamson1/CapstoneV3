@@ -35,31 +35,63 @@
             <div class="space-y-4">
                 <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
                 <nav class="space-y-2">
-                    <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
-                        Dashboard
-                    </a>
-                    <a href="{{ route('projects.index') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white">📁</span>
-                        Projects
-                    </a>
-                    <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
-                        Tasks
-                    </a>
-                    <a href="{{ route('admin.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
-                        Activity Log
-                    </a>
-                    <a href="{{ route('admin.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
-                        Reports
-                    </a>
-                    @if(auth()->user()->role === 'admin')
-                    <button id="openAssignRoleModal" type="button" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">👥</span>
-                        Assign Role
-                    </button>
+                    @if(auth()->user()->role === 'dm')
+                        <a href="{{ route('dm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
+                            Dashboard
+                        </a>
+                        <a href="{{ route('dm.projects') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white">📁</span>
+                            Projects
+                        </a>
+                        <a href="{{ route('dm.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
+                            Tasks
+                        </a>
+                        <a href="{{ route('dm.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
+                            Reports
+                        </a>
+                    @elseif(auth()->user()->role === 'client')
+                        <a href="{{ route('client.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
+                            Dashboard
+                        </a>
+                        <a href="{{ route('client.projects') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white">📁</span>
+                            Projects
+                        </a>
+                        <a href="{{ route('client.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
+                            Tasks
+                        </a>
+                    @else
+                        <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
+                            Dashboard
+                        </a>
+                        <a href="{{ route('projects.index') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-500 text-white">📁</span>
+                            Projects
+                        </a>
+                        <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
+                            Tasks
+                        </a>
+                        <a href="{{ route('admin.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
+                            Activity Log
+                        </a>
+                        <a href="{{ route('admin.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
+                            Reports
+                        </a>
+                        @if(auth()->user()->role === 'admin')
+                        <button id="openAssignRoleModal" type="button" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">👥</span>
+                            Assign Role
+                        </button>
+                        @endif
                     @endif
                 </nav>
             </div>
@@ -71,7 +103,7 @@
             {{-- Header --}}
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <a href="{{ route('projects.index') }}" class="mb-2 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-700">
+                    <a href="{{ auth()->user()->role === 'dm' ? route('dm.projects') : (auth()->user()->role === 'client' ? route('client.projects') : route('projects.index')) }}" class="mb-2 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-700">
                         ← Back to Projects
                     </a>
                     <h2 class="text-2xl font-semibold text-slate-900">{{ $project->name }}</h2>
@@ -88,7 +120,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    @if(auth()->user()->role !== 'dm' && auth()->user()->role !== 'client')
                     <button id="openCreateTaskModal" type="button" class="rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">+ Add Task</button>
+                    @endif
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="rounded-3xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700">Logout</button>
@@ -223,6 +257,7 @@
                                     </button>
 
                                     {{-- Edit task button --}}
+                                    @if(auth()->user()->role !== 'client')
                                     <button type="button"
                                         onclick="openEditTask(
                                             {{ $task->id }},
@@ -240,6 +275,7 @@
                                         </svg>
                                         Edit
                                     </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeUserMail;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 
 class RegisteredUserController extends Controller
@@ -30,6 +32,8 @@ class RegisteredUserController extends Controller
             'role' => ['required', 'in:admin,pm,dm,client'],
         ]);
 
+        $plainPassword = $request->password;
+
         $user = User::create([
             'name' => $request->username,
             'first_name' => $request->first_name,
@@ -37,14 +41,26 @@ class RegisteredUserController extends Controller
             'position' => $request->position,
             'company' => $request->company,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($plainPassword),
             'role' => $request->role,
         ]);
 
         event(new Registered($user));
 
-        Auth::login($user);
+        // Send welcome email with credentials and role guide
+        try {
+            Mail::to($user->email)->send(new WelcomeUserMail($user, $plainPassword));
+        } catch (\Throwable $e) {
+            // Mail failure should not block account creation
+        }
 
-        return redirect()->route('dashboard');
+        // Only auto-login when this is a self-registration (no one is currently authenticated)
+        if (!Auth::check()) {
+            Auth::login($user);
+            return redirect()->route('dashboard');
+        }
+
+        // Admin created the account — stay logged in as admin and go back to users page
+        return redirect()->route('admin.users.index')->with('status', 'User account created successfully.');
     }
 }

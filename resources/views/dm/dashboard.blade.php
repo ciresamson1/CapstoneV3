@@ -24,23 +24,19 @@
             <div class="space-y-4">
                 <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
                 <nav class="space-y-2">
-                    <a href="{{ route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                    <a href="{{ route('dm.dashboard') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500 text-white">🏠</span>
                         Dashboard
                     </a>
-                    <a href="{{ route('pm.projects') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('dm.projects') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
                         Projects
                     </a>
-                    <a href="{{ route('pm.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('dm.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
                         Tasks
                     </a>
-                    <a href="{{ route('pm.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
-                        Activity Log
-                    </a>
-                    <a href="{{ route('pm.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('dm.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
                         Reports
                     </a>
@@ -64,12 +60,9 @@
             {{-- Header --}}
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-2xl font-semibold text-slate-900">Project Manager Dashboard</h2>
-                    <p class="mt-2 text-sm text-slate-500">Actionable insights and risk signals for the projects you manage.</p>
+                    <h2 class="text-2xl font-semibold text-slate-900">Digital Marketer Dashboard</h2>
+                    <p class="mt-2 text-sm text-slate-500">Overview of your assigned tasks and active projects.</p>
                 </div>
-                <button id="openCreateProjectModal" type="button" class="inline-flex items-center gap-2 rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">
-                    + New Project
-                </button>
             </div>
 
             {{-- KPI Cards --}}
@@ -292,60 +285,6 @@
     </div>
 </div>
 
-{{-- Create Project Modal --}}
-<div id="createProjectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
-    <div class="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h3 class="text-xl font-semibold text-slate-900">Create new project</h3>
-                <p class="mt-2 text-sm text-slate-500">Fill in the details below to add a project.</p>
-            </div>
-            <button id="closeCreateProjectModal" type="button" class="rounded-3xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-100">Close</button>
-        </div>
-
-        @if($errors->any())
-            <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                <ul class="list-inside list-disc space-y-1">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('projects.store') }}" class="mt-6 grid gap-4 sm:grid-cols-2">
-            @csrf
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Project name <span class="text-rose-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. SEO Campaign Q2" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Description</label>
-                <textarea name="description" rows="3" placeholder="Brief project overview..." class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 resize-none">{{ old('description') }}</textarea>
-            </div>
-            <div>
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Start date <span class="text-rose-500">*</span></label>
-                <input type="date" name="start_date" value="{{ old('start_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div>
-                <label class="mb-2 block text-sm font-semibold text-slate-700">End date <span class="text-rose-500">*</span></label>
-                <input type="date" name="end_date" value="{{ old('end_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Status</label>
-                <select name="status" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
-                    <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="on_hold" {{ old('status') === 'on_hold' ? 'selected' : '' }}>On Hold</option>
-                    <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Project</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const ganttData = @json($ganttData);
@@ -553,18 +492,5 @@
     }
 
     createTeamChart();
-
-    // Create Project Modal
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('createProjectModal');
-        function openModal()  { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-        function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
-
-        document.getElementById('openCreateProjectModal').addEventListener('click', openModal);
-        document.getElementById('closeCreateProjectModal').addEventListener('click', closeModal);
-        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-
-        @if($errors->any()) openModal(); @endif
-    });
 </script>
 @endsection

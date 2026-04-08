@@ -32,15 +32,15 @@
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500 text-white">📁</span>
                         Projects
                     </a>
-                    <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('pm.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
                         Tasks
                     </a>
-                    <a href="{{ route('admin.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('pm.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
                         Activity Log
                     </a>
-                    <a href="{{ route('admin.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('pm.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
                         Reports
                     </a>
@@ -142,6 +142,8 @@
                             <tr>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Project</th>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Owner</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Client</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">Company</th>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Progress</th>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Status</th>
                                 <th class="pb-4 pr-8 font-semibold text-slate-900">Tasks</th>
@@ -160,6 +162,8 @@
                                         <div class="text-sm text-slate-500">{{ \Illuminate\Support\Str::limit($project->description, 80) }}</div>
                                     </td>
                                     <td class="py-5 pr-8 text-slate-700">{{ $project->creator?->name ?? 'Unassigned' }}</td>
+                                    <td class="py-5 pr-8 text-slate-700">{{ $project->client?->name ?? '—' }}</td>
+                                    <td class="py-5 pr-8 text-slate-700">{{ $project->client?->company ?? '—' }}</td>
                                     <td class="py-5 pr-8">
                                         <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
                                             @if($project->progress > 0)
@@ -181,7 +185,7 @@
                                             <a href="{{ route('projects.show', $project->id) }}"
                                                class="rounded-full bg-violet-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-600">View</a>
                                             <button type="button"
-                                                onclick="openEditProject({{ $project->id }}, '{{ addslashes($project->name) }}', '{{ addslashes($project->description) }}', '{{ $project->start_date }}', '{{ $project->end_date }}', '{{ $project->status }}')"
+                                                onclick="openEditProject({{ $project->id }}, '{{ addslashes($project->name) }}', '{{ addslashes($project->description) }}', '{{ $project->start_date }}', '{{ $project->end_date }}', '{{ $project->status }}', {{ $project->client_id ?? 'null' }}, '{{ addslashes($project->client?->name ?? '') }}', '{{ addslashes($project->client?->email ?? '') }}')"
                                                 class="rounded-full bg-sky-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-600">Edit</button>
                                             <form method="POST" action="{{ route('projects.destroy', $project->id) }}" class="inline"
                                                   onsubmit="return confirm('Delete project &quot;{{ addslashes($project->name) }}&quot;? This cannot be undone.')">
@@ -256,6 +260,15 @@
                     <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                 </select>
             </div>
+            <div class="sm:col-span-2" id="createClientWrapper">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Assign Client <span class="font-normal text-slate-400">(optional)</span></label>
+                <div class="relative">
+                    <input type="text" id="createClientSearch" autocomplete="off" placeholder="e.g. eric | eric@sgpro.co"
+                        class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                    <input type="hidden" name="client_id" id="createClientId">
+                    <ul id="createClientDropdown" class="absolute z-50 mt-1 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg"></ul>
+                </div>
+            </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Project</button>
             </div>
@@ -302,6 +315,15 @@
                     <option value="on_hold">On Hold</option>
                     <option value="completed">Completed</option>
                 </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Assign Client <span class="font-normal text-slate-400">(optional)</span></label>
+                <div class="relative">
+                    <input type="text" id="editClientSearch" autocomplete="off" placeholder="e.g. eric | eric@sgpro.co"
+                        class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                    <input type="hidden" name="client_id" id="editClientId">
+                    <ul id="editClientDropdown" class="absolute z-50 mt-1 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg"></ul>
+                </div>
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="w-full rounded-3xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-sky-600">Save Changes</button>
@@ -391,7 +413,7 @@
         });
     });
 
-    function openEditProject(id, name, description, startDate, endDate, status) {
+    function openEditProject(id, name, description, startDate, endDate, status, clientId, clientName, clientEmail) {
         const modal = document.getElementById('editProjectModal');
         document.getElementById('editProjectForm').action = '/projects/' + id;
         document.getElementById('edit_name').value        = name;
@@ -399,8 +421,98 @@
         document.getElementById('edit_start_date').value  = startDate;
         document.getElementById('edit_end_date').value    = endDate;
         document.getElementById('edit_status').value      = status;
+        document.getElementById('editClientId').value     = clientId || '';
+        document.getElementById('editClientSearch').value = clientId ? (clientName + ' | ' + clientEmail) : '';
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+
+    // Edit modal client autocomplete
+    (function () {
+        const searchInput = document.getElementById('editClientSearch');
+        const hiddenInput = document.getElementById('editClientId');
+        const dropdown    = document.getElementById('editClientDropdown');
+        const searchUrl   = '{{ route("projects.clients.search") }}';
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function () {
+            hiddenInput.value = '';
+            clearTimeout(debounceTimer);
+            const q = this.value.trim();
+            if (!q) { dropdown.classList.add('hidden'); dropdown.innerHTML = ''; return; }
+            debounceTimer = setTimeout(() => {
+                fetch(searchUrl + '?q=' + encodeURIComponent(q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.json())
+                .then(clients => {
+                    dropdown.innerHTML = '';
+                    if (!clients.length) {
+                        dropdown.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400">No clients found</li>';
+                    } else {
+                        clients.forEach(c => {
+                            const li = document.createElement('li');
+                            li.className = 'cursor-pointer px-4 py-3 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-700';
+                            li.textContent = c.name + ' | ' + c.email;
+                            li.addEventListener('mousedown', function (e) {
+                                e.preventDefault();
+                                searchInput.value = c.name + ' | ' + c.email;
+                                hiddenInput.value = c.id;
+                                dropdown.classList.add('hidden');
+                            });
+                            dropdown.appendChild(li);
+                        });
+                    }
+                    dropdown.classList.remove('hidden');
+                });
+            }, 250);
+        });
+
+        searchInput.addEventListener('blur', () => setTimeout(() => dropdown.classList.add('hidden'), 150));
+        searchInput.addEventListener('focus', () => { if (dropdown.children.length) dropdown.classList.remove('hidden'); });
+    })();
+
+    // Create modal client autocomplete
+    (function () {
+        const searchInput  = document.getElementById('createClientSearch');
+        const hiddenInput  = document.getElementById('createClientId');
+        const dropdown     = document.getElementById('createClientDropdown');
+        const searchUrl    = '{{ route("projects.clients.search") }}';
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function () {
+            hiddenInput.value = '';
+            clearTimeout(debounceTimer);
+            const q = this.value.trim();
+            if (!q) { dropdown.classList.add('hidden'); dropdown.innerHTML = ''; return; }
+            debounceTimer = setTimeout(() => {
+                fetch(searchUrl + '?q=' + encodeURIComponent(q), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(clients => {
+                    dropdown.innerHTML = '';
+                    if (!clients.length) {
+                        dropdown.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400">No clients found</li>';
+                    } else {
+                        clients.forEach(c => {
+                            const li = document.createElement('li');
+                            li.className = 'cursor-pointer px-4 py-3 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-700';
+                            li.textContent = c.name + ' | ' + c.email;
+                            li.addEventListener('mousedown', function (e) {
+                                e.preventDefault();
+                                searchInput.value = c.name + ' | ' + c.email;
+                                hiddenInput.value = c.id;
+                                dropdown.classList.add('hidden');
+                            });
+                            dropdown.appendChild(li);
+                        });
+                    }
+                    dropdown.classList.remove('hidden');
+                });
+            }, 250);
+        });
+
+        searchInput.addEventListener('blur', () => setTimeout(() => dropdown.classList.add('hidden'), 150));
+        searchInput.addEventListener('focus', () => { if (dropdown.children.length) dropdown.classList.remove('hidden'); });
+    })();
 </script>
 @endsection

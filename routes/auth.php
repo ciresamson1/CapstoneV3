@@ -15,9 +15,16 @@ Route::post('/login', function (Request $request) {
         $request->session()->regenerate();
 
         $user = Auth::user();
-        $defaultRoute = $user && $user->role === 'admin' ? 'admin.dashboard' : 'dashboard';
+        if ($user->role === 'admin') {
+            $defaultRoute = route('admin.dashboard');
+        } elseif ($user->role === 'pm') {
+            $defaultRoute = route('pm.dashboard');
+        } else {
+            // dm, client — no dedicated dashboard, send to projects list
+            $defaultRoute = route('projects.index');
+        }
 
-        return redirect()->intended(route($defaultRoute));
+        return redirect()->intended($defaultRoute);
     }
 
     return back()->withErrors([

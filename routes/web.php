@@ -23,8 +23,44 @@ Route::middleware(['auth'])->group(function () {
     // PM dedicated dashboard
     Route::get('/pm/dashboard', [DashboardController::class, 'index'])->middleware('role:pm')->name('pm.dashboard');
 
+    // DM dedicated dashboard
+    Route::get('/dm/dashboard', [DashboardController::class, 'dmIndex'])->middleware('role:dm')->name('dm.dashboard');
+
+    // Client dedicated dashboard
+    Route::get('/client/dashboard', [DashboardController::class, 'clientIndex'])->middleware('role:client')->name('client.dashboard');
+
+    // Client projects (filtered to client_id)
+    Route::get('/client/projects', [ProjectController::class, 'clientIndex'])->middleware('role:client')->name('client.projects');
+
+    // Client single project view
+    Route::get('/client/projects/{project}', [ProjectController::class, 'show'])->middleware('role:client')->name('client.projects.show');
+
+    // Client tasks (tasks in client's assigned projects)
+    Route::get('/client/tasks', [TaskController::class, 'clientIndex'])->middleware('role:client')->name('client.tasks.index');
+
+    // DM projects (filtered to DM's assigned tasks' projects)
+    Route::get('/dm/projects', [ProjectController::class, 'dmIndex'])->middleware('role:dm')->name('dm.projects');
+
+    // DM single project view
+    Route::get('/dm/projects/{project}', [ProjectController::class, 'show'])->middleware('role:dm')->name('dm.projects.show');
+
+    // DM tasks (filtered to DM's assigned tasks)
+    Route::get('/dm/tasks', [TaskController::class, 'dmIndex'])->middleware('role:dm')->name('dm.tasks.index');
+
+    // DM report (client cards scoped to DM's projects)
+    Route::get('/dm/report', [ReportController::class, 'dmReport'])->middleware('role:dm')->name('dm.report.index');
+
     // PM projects (filtered to PM's own projects)
     Route::get('/pm/projects', [ProjectController::class, 'pmIndex'])->middleware('role:pm')->name('pm.projects');
+
+    // PM tasks (filtered to PM's own projects)
+    Route::get('/pm/tasks', [TaskController::class, 'pmIndex'])->middleware('role:pm')->name('pm.tasks.index');
+
+    // PM activity log (filtered to PM's own projects)
+    Route::get('/pm/activity-log', [ActivityLogController::class, 'pmIndex'])->middleware('role:pm')->name('pm.activity-log.index');
+
+    // PM report (DMs + clients scoped to PM's projects)
+    Route::get('/pm/report', [ReportController::class, 'pmReport'])->middleware('role:pm')->name('pm.report.index');
 
     /*
     |--------------------------------------------------------------------------
@@ -32,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/projects/clients/search', [ProjectController::class, 'searchClients'])->name('projects.clients.search');
     Route::resource('projects', ProjectController::class);
 
     /*
@@ -95,13 +132,40 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/chart-data', [AdminDashboardController::class, 'chartData'])->name('dashboard.chart-data');
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('/users/invite', [AdminUserController::class, 'invite'])->name('users.invite');
+        Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
     });
 
-    // Shared routes: accessible by admin and pm roles
-    Route::prefix('admin')->middleware(['auth', 'role:admin,pm'])->name('admin.')->group(function () {
-        Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-        Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
-        Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+        // Shared routes: accessible by admin, pm, dm and client roles (for PDF)
+    Route::prefix('admin')->middleware(['auth', 'role:admin,pm,dm,client'])->name('admin.')->group(function () {
+        Route::get('/tasks', function () {
+            if (auth()->user()->role === 'pm') {
+                return redirect()->route('pm.tasks.index');
+            }
+            if (auth()->user()->role === 'dm') {
+                return redirect()->route('dm.tasks.index');
+            }
+            if (auth()->user()->role === 'client') {
+                return redirect()->route('client.tasks.index');
+            }
+            return app(\App\Http\Controllers\TaskController::class)->index();
+        })->name('tasks.index');
+        Route::get('/activity-log', function (Illuminate\Http\Request $request) {
+            if (auth()->user()->role === 'pm') {
+                return redirect()->route('pm.activity-log.index', $request->query());
+            }
+            return app(\App\Http\Controllers\ActivityLogController::class)->index($request);
+        })->name('activity-log.index');
+        Route::get('/report', function () {
+            if (auth()->user()->role === 'pm') {
+                return redirect()->route('pm.report.index');
+            }
+            if (auth()->user()->role === 'dm') {
+                return redirect()->route('dm.report.index');
+            }
+            return app(\App\Http\Controllers\ReportController::class)->index();
+        })->name('report.index');
         Route::get('/report/pdf/{userId}', [ReportController::class, 'pdf'])->name('report.pdf');
     });
 

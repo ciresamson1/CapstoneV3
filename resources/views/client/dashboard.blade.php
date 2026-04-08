@@ -4,7 +4,7 @@
 <div class="min-h-screen overflow-x-hidden bg-slate-100">
     <div class="flex min-h-screen flex-col xl:flex-row">
 
-        {{-- Sidebar --}}
+        {{-- Client Sidebar --}}
         <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
             <div class="mb-10">
                 <div class="flex items-center gap-3">
@@ -24,25 +24,17 @@
             <div class="space-y-4">
                 <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
                 <nav class="space-y-2">
-                    <a href="{{ route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                    <a href="{{ route('client.dashboard') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500 text-white">🏠</span>
                         Dashboard
                     </a>
-                    <a href="{{ route('pm.projects') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('client.projects') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
                         Projects
                     </a>
-                    <a href="{{ route('pm.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
+                    <a href="{{ route('client.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
                         <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
                         Tasks
-                    </a>
-                    <a href="{{ route('pm.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
-                        Activity Log
-                    </a>
-                    <a href="{{ route('pm.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
-                        Reports
                     </a>
                 </nav>
             </div>
@@ -64,12 +56,9 @@
             {{-- Header --}}
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-2xl font-semibold text-slate-900">Project Manager Dashboard</h2>
-                    <p class="mt-2 text-sm text-slate-500">Actionable insights and risk signals for the projects you manage.</p>
+                    <h2 class="text-2xl font-semibold text-slate-900">Client Dashboard</h2>
+                    <p class="mt-2 text-sm text-slate-500">Overview of your assigned projects and task progress.</p>
                 </div>
-                <button id="openCreateProjectModal" type="button" class="inline-flex items-center gap-2 rounded-3xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">
-                    + New Project
-                </button>
             </div>
 
             {{-- KPI Cards --}}
@@ -81,7 +70,9 @@
                             <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{{ $card['title'] }}</p>
                             <p class="mt-4 text-3xl font-bold text-slate-900">{{ $card['value'] }}</p>
                         </div>
-                        <div class="flex h-12 w-12 items-center justify-center rounded-3xl text-lg" style="background-color: {{ $card['color'] === 'red' ? 'rgba(254,226,226,0.65)' : ($card['color'] === 'yellow' ? 'rgba(254,240,138,0.65)' : ($card['color'] === 'green' ? 'rgba(220,252,231,0.65)' : 'rgba(191,219,254,0.65)')) }}; color: {{ $card['color'] === 'red' ? '#dc2626' : ($card['color'] === 'yellow' ? '#f59e0b' : ($card['color'] === 'green' ? '#16a34a' : '#0284c7')) }};">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-3xl text-lg"
+                             style="background-color: {{ $card['color'] === 'red' ? 'rgba(254,226,226,0.65)' : ($card['color'] === 'yellow' ? 'rgba(254,240,138,0.65)' : ($card['color'] === 'green' ? 'rgba(220,252,231,0.65)' : 'rgba(191,219,254,0.65)')) }};
+                                    color: {{ $card['color'] === 'red' ? '#dc2626' : ($card['color'] === 'yellow' ? '#f59e0b' : ($card['color'] === 'green' ? '#16a34a' : '#0284c7')) }};">
                             @if($card['color'] === 'red') ⚠️ @elseif($card['color'] === 'yellow') ⏳ @elseif($card['color'] === 'green') ✅ @else 💬 @endif
                         </div>
                     </div>
@@ -95,8 +86,8 @@
                 <div class="rounded-3xl bg-white p-6 shadow-sm">
                     <div class="mb-6 flex items-center justify-between">
                         <div>
-                            <h3 class="text-lg font-semibold text-slate-900">Smart Alerts</h3>
-                            <p class="text-sm text-slate-500">Critical updates and risk signals sorted by priority.</p>
+                            <h3 class="text-lg font-semibold text-slate-900">Project Alerts</h3>
+                            <p class="text-sm text-slate-500">Status updates and signals for your projects.</p>
                         </div>
                         <span class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">Real-time</span>
                     </div>
@@ -115,7 +106,7 @@
                                         @foreach($alert['items'] as $item)
                                             <div class="rounded-2xl bg-white p-3 text-sm text-slate-600 shadow-sm">
                                                 <p class="font-semibold text-slate-900">{{ $item['project'] }}</p>
-                                                <p>{{ $item['count'] }} overdue task{{ $item['count'] === 1 ? '' : 's' }}</p>
+                                                <p>{{ $item['summary'] }}</p>
                                             </div>
                                         @endforeach
                                     </div>
@@ -132,7 +123,7 @@
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-slate-900">Project Health</h3>
-                            <p class="text-sm text-slate-500">Live performance overview for your active and at-risk projects.</p>
+                            <p class="text-sm text-slate-500">Live performance overview of your active projects.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <span class="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-700">On Track</span>
@@ -172,7 +163,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="4" class="py-6 text-center text-sm text-slate-500">No projects to display.</td>
+                                    <td colspan="4" class="py-6 text-center text-sm text-slate-500">No projects assigned to you yet.</td>
                                 </tr>
                             @endif
                         </tbody>
@@ -180,15 +171,13 @@
                 </div>
             </section>
 
-            {{-- Gantt + Team Performance + Client Activity --}}
-            <section class="mt-6 grid gap-6 xl:grid-cols-[0.75fr_0.5fr]">
-
-                {{-- Gantt --}}
+            {{-- Gantt Timeline --}}
+            <section class="mt-6">
                 <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-w-0">
                     <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h3 class="text-lg font-semibold text-slate-900">Interactive Gantt Timeline</h3>
-                            <p class="text-sm text-slate-500">Live timeline view of task windows, deadlines and project ownership.</p>
+                            <h3 class="text-lg font-semibold text-slate-900">Task Timeline</h3>
+                            <p class="text-sm text-slate-500">Gantt view of tasks across your assigned projects.</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="relative" id="projectSearchWrap">
@@ -205,157 +194,32 @@
                                     @endforeach
                                 </ul>
                             </div>
-                            <select id="userFilter" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
-                                <option value="all">All Users</option>
-                                @foreach(collect($ganttData)->pluck('assigned_to')->unique() as $userName)
-                                    <option value="{{ $userName }}">{{ $userName }}</option>
-                                @endforeach
-                            </select>
                             <select id="zoomLevel" class="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
                                 <option value="1">Day</option>
-                                <option value="7">Week</option>
+                                <option value="7" selected>Week</option>
                                 <option value="30">Month</option>
                             </select>
                         </div>
                     </div>
                     <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                        <div class="mb-4">
-                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Gantt Timeline</p>
-                            <p id="ganttProjectTitle" class="mt-3 text-lg font-semibold text-slate-900">All Projects</p>
-                            <p id="ganttProjectDescription" class="mt-2 text-sm text-slate-500">Timeline across all projects.</p>
-                        </div>
-                        <div class="h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
+                        <p id="ganttProjectTitle" class="text-lg font-semibold text-slate-900">All Projects</p>
+                        <p id="ganttProjectDescription" class="mt-1 text-sm text-slate-500">Timeline across all projects.</p>
+                        <div class="mt-4 h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
                             <canvas id="ganttChart" class="h-full w-full block" style="min-height:420px;"></canvas>
                         </div>
                     </div>
                 </div>
-
-                {{-- Team Performance + Client Activity --}}
-                <div class="space-y-6 min-w-0">
-                    <div class="rounded-3xl bg-white p-6 shadow-sm min-w-0">
-                        <h3 class="text-lg font-semibold text-slate-900">Team Performance</h3>
-                        <p class="text-sm text-slate-500">Completed and delayed tasks per member.</p>
-                        <div class="mt-6 h-[320px] min-w-0">
-                            <canvas id="teamPerformanceChart" class="h-full w-full"></canvas>
-                        </div>
-                    </div>
-                    <div class="rounded-3xl bg-white p-6 shadow-sm">
-                        <h3 class="text-lg font-semibold text-slate-900">Client Activity</h3>
-                        <p class="text-sm text-slate-500">Pending approvals and recent feedback.</p>
-                        <div class="mt-6 space-y-4">
-                            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm text-slate-500">Pending approvals</p>
-                                    <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">{{ $clientActivity['pendingApprovals'] }}</span>
-                                </div>
-                                <p class="mt-3 text-sm text-slate-600">Currently awaiting client review and confirmation.</p>
-                            </div>
-                            <div class="rounded-3xl bg-slate-50 p-4">
-                                <h4 class="text-sm font-semibold text-slate-900">Recent client comments</h4>
-                                <div class="mt-4 space-y-3">
-                                    @forelse($clientActivity['recentComments'] as $comment)
-                                        <div class="rounded-3xl border border-slate-200 bg-white p-4">
-                                            <div class="flex items-center justify-between gap-3">
-                                                <div>
-                                                    <p class="font-semibold text-slate-900">{{ $comment['user'] }}</p>
-                                                    <p class="text-sm text-slate-500">{{ $comment['project'] }}</p>
-                                                </div>
-                                                <span class="text-xs text-slate-400">{{ $comment['time'] }}</span>
-                                            </div>
-                                            <p class="mt-3 text-sm text-slate-600">{{ $comment['message'] }}</p>
-                                        </div>
-                                    @empty
-                                        <p class="text-sm text-slate-500">No recent client comments.</p>
-                                    @endforelse
-                                </div>
-                            </div>
-                            <div class="rounded-3xl bg-slate-50 p-4">
-                                <h4 class="text-sm font-semibold text-slate-900">Revision cycles</h4>
-                                <div class="mt-3 space-y-2">
-                                    @forelse($clientActivity['revisionCycles'] as $cycle)
-                                        <div class="flex items-center justify-between rounded-3xl bg-white p-3 text-sm text-slate-600">
-                                            <span>{{ $cycle['project'] }}</span>
-                                            <span class="font-semibold text-slate-900">{{ $cycle['cycles'] }}</span>
-                                        </div>
-                                    @empty
-                                        <p class="text-sm text-slate-500">No revision data.</p>
-                                    @endforelse
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </section>
 
         </main>
     </div>
 </div>
 
-{{-- Create Project Modal --}}
-<div id="createProjectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
-    <div class="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h3 class="text-xl font-semibold text-slate-900">Create new project</h3>
-                <p class="mt-2 text-sm text-slate-500">Fill in the details below to add a project.</p>
-            </div>
-            <button id="closeCreateProjectModal" type="button" class="rounded-3xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-100">Close</button>
-        </div>
-
-        @if($errors->any())
-            <div class="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                <ul class="list-inside list-disc space-y-1">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('projects.store') }}" class="mt-6 grid gap-4 sm:grid-cols-2">
-            @csrf
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Project name <span class="text-rose-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name') }}" placeholder="e.g. SEO Campaign Q2" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Description</label>
-                <textarea name="description" rows="3" placeholder="Brief project overview..." class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 resize-none">{{ old('description') }}</textarea>
-            </div>
-            <div>
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Start date <span class="text-rose-500">*</span></label>
-                <input type="date" name="start_date" value="{{ old('start_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div>
-                <label class="mb-2 block text-sm font-semibold text-slate-700">End date <span class="text-rose-500">*</span></label>
-                <input type="date" name="end_date" value="{{ old('end_date') }}" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100" required>
-            </div>
-            <div class="sm:col-span-2">
-                <label class="mb-2 block text-sm font-semibold text-slate-700">Status</label>
-                <select name="status" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
-                    <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="on_hold" {{ old('status') === 'on_hold' ? 'selected' : '' }}>On Hold</option>
-                    <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Project</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const ganttData = @json($ganttData);
-    const teamPerformance = @json($teamPerformance);
-
-    const ganttCtx = document.getElementById('ganttChart').getContext('2d');
-    const teamCtx  = document.getElementById('teamPerformanceChart').getContext('2d');
-
+    const ganttCtx  = document.getElementById('ganttChart').getContext('2d');
     let ganttChart;
-    let teamChart;
 
     function formatDateOffset(offset) {
         const date = new Date();
@@ -371,9 +235,7 @@
 
     function createGanttChart(data, zoomDays) {
         const maxSpan = Math.max(...data.map(item => item.startOffset + item.duration), 7);
-
         if (ganttChart) ganttChart.destroy();
-
         ganttChart = new Chart(ganttCtx, {
             type: 'bar',
             data: {
@@ -409,20 +271,11 @@
                         stacked: true,
                         min: 0,
                         max: Math.max(maxSpan, 7),
-                        ticks: {
-                            stepSize: zoomDays,
-                            callback: value => formatDateOffset(value),
-                            color: '#475569',
-                        },
+                        ticks: { stepSize: zoomDays, callback: value => formatDateOffset(value), color: '#475569' },
                         title: { display: true, text: getZoomLabel(zoomDays), color: '#475569' },
                         grid: { color: 'rgba(15,23,42,0.08)' },
                     },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        ticks: { color: '#475569' },
-                        grid: { display: false },
-                    },
+                    y: { stacked: true, beginAtZero: true, ticks: { color: '#475569' }, grid: { display: false } },
                 },
                 plugins: {
                     tooltip: {
@@ -433,29 +286,6 @@
                         },
                     },
                     legend: { display: false },
-                },
-            },
-        });
-    }
-
-    function createTeamChart() {
-        if (teamChart) teamChart.destroy();
-
-        teamChart = new Chart(teamCtx, {
-            type: 'bar',
-            data: {
-                labels: teamPerformance.labels,
-                datasets: [
-                    { label: 'Completed Tasks', data: teamPerformance.completed, backgroundColor: '#22c55e', borderRadius: 12 },
-                    { label: 'Delayed Tasks',   data: teamPerformance.delayed,   backgroundColor: '#f59e0b', borderRadius: 12 },
-                ],
-            },
-            options: {
-                maintainAspectRatio: false,
-                responsive: true,
-                scales: {
-                    x: { stacked: true },
-                    y: { stacked: true, beginAtZero: true },
                 },
             },
         });
@@ -476,10 +306,9 @@
         const projectItem = (!selectedProject || selectedProject === 'all')
             ? getUniqueGanttProject()
             : ganttData.find(item => item.project === selectedProject);
-
         if (!projectItem) {
-            ganttProjectTitleEl.textContent       = '';
-            ganttProjectDescriptionEl.textContent = '';
+            ganttProjectTitleEl.textContent       = 'All Projects';
+            ganttProjectDescriptionEl.textContent = 'Timeline across all projects.';
             return;
         }
         ganttProjectTitleEl.textContent       = projectItem.project;
@@ -488,18 +317,12 @@
 
     function filterGantt() {
         const project  = document.getElementById('projectFilter').value;
-        const user     = document.getElementById('userFilter').value;
         const zoom     = parseInt(document.getElementById('zoomLevel').value, 10);
-        const filtered = ganttData.filter(item => {
-            const projectMatch = !project || item.project === project;
-            const userMatch    = user === 'all' || item.assigned_to === user;
-            return projectMatch && userMatch;
-        });
+        const filtered = ganttData.filter(item => !project || item.project === project);
         updateGanttProjectInfo(project || 'all');
         createGanttChart(filtered, zoom);
     }
 
-    // Project suggestive search
     const projectSearchInput  = document.getElementById('projectSearchInput');
     const projectFilterHidden = document.getElementById('projectFilter');
     const projectSuggestions  = document.getElementById('projectSuggestions');
@@ -514,10 +337,7 @@
             if (match) hasVisible = true;
         });
         projectSuggestions.classList.toggle('hidden', !q || !hasVisible);
-        if (!q) {
-            projectFilterHidden.value = '';
-            filterGantt();
-        }
+        if (!q) { projectFilterHidden.value = ''; filterGantt(); }
     });
 
     projectItems.forEach(li => {
@@ -535,10 +355,8 @@
         }
     });
 
-    document.getElementById('userFilter').addEventListener('change', filterGantt);
     document.getElementById('zoomLevel').addEventListener('change', filterGantt);
 
-    // Init
     updateGanttProjectInfo('all');
     createGanttChart(ganttData, 7);
 
@@ -551,20 +369,5 @@
             filterGantt();
         }
     }
-
-    createTeamChart();
-
-    // Create Project Modal
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('createProjectModal');
-        function openModal()  { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-        function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
-
-        document.getElementById('openCreateProjectModal').addEventListener('click', openModal);
-        document.getElementById('closeCreateProjectModal').addEventListener('click', closeModal);
-        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-
-        @if($errors->any()) openModal(); @endif
-    });
 </script>
 @endsection

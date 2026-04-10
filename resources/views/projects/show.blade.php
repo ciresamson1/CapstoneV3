@@ -257,7 +257,7 @@
                                     </button>
 
                                     {{-- Edit task button --}}
-                                    @if(auth()->user()->role !== 'client')
+                                    @if(auth()->user()->role !== 'client' && auth()->user()->role !== 'dm')
                                     <button type="button"
                                         onclick="openEditTask(
                                             {{ $task->id }},
@@ -292,57 +292,149 @@
                                         $downs    = $comment->reactions->where('type', 'down')->count();
                                         $myReact  = $comment->reactions->where('user_id', auth()->id())->first()?->type;
                                     @endphp
-                                    <div class="comment-bubble flex {{ $isMe ? 'justify-end' : 'justify-start' }} {{ !$loop->last ? 'older-comment' : '' }}"
+                                    <div class="comment-thread {{ !$loop->last ? 'older-comment' : '' }}"
                                          style="{{ !$loop->last ? 'display:none' : '' }}"
-                                         data-task="{{ $task->id }}">
-                                        @if(!$isMe)
-                                            <span class="mr-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
-                                                {{ strtoupper(substr($comment->user->name, 0, 1)) }}
-                                            </span>
-                                        @endif
-                                        <div class="max-w-[75%]">
-                                            <div class="mb-1 flex items-center gap-2 {{ $isMe ? 'justify-end' : '' }}">
-                                                <span class="text-xs font-semibold {{ $isMe ? 'text-emerald-600' : 'text-slate-700' }}">{{ $comment->user->name }}</span>
-                                                <span class="text-[10px] text-slate-400">{{ $comment->created_at->format('M d · h:i A') }}</span>
-                                            </div>
-                                            <div class="rounded-2xl px-4 py-2.5 text-sm {{ $isMe ? 'rounded-tr-sm bg-emerald-600 text-white' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800' }}">
-                                                @if($comment->message)
-                                                    <p>{{ $comment->message }}</p>
-                                                @endif
-                                                @if($comment->attachment)
-                                                    <div class="{{ $comment->message ? 'mt-2' : '' }}">
-                                                        <img src="{{ asset('storage/' . $comment->attachment) }}" class="max-h-40 rounded-xl object-cover" alt="attachment">
-                                                        <a href="{{ route('task-comments.download', $comment->id) }}"
-                                                            class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold underline {{ $isMe ? 'text-emerald-200' : 'text-slate-500' }} hover:no-underline">
-                                                            ↓ Download
+                                         data-task="{{ $task->id }}"
+                                         data-comment-id="{{ $comment->id }}">
+                                        <div class="comment-bubble flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                                            @if(!$isMe)
+                                                <span class="mr-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
+                                                    {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+                                                </span>
+                                            @endif
+                                            <div class="max-w-[85%]">
+                                                <div class="mb-1 flex items-center gap-2 {{ $isMe ? 'justify-end' : '' }}">
+                                                    <span class="text-xs font-semibold {{ $isMe ? 'text-emerald-600' : 'text-slate-700' }}">{{ $comment->user->name }}</span>
+                                                    <span class="text-[10px] text-slate-400">{{ $comment->created_at->format('M d · h:i A') }}</span>
+                                                </div>
+                                                <div class="rounded-2xl px-4 py-2.5 text-sm {{ $isMe ? 'rounded-tr-sm bg-emerald-600 text-white' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800' }}">
+                                                    @if($comment->message)
+                                                        <p class="whitespace-pre-line">{{ $comment->message }}</p>
+                                                    @endif
+                                                    @if($comment->link_url)
+                                                        <a href="{{ $comment->link_url }}" target="_blank" rel="noopener noreferrer"
+                                                           class="{{ $comment->message ? 'mt-3' : '' }} inline-flex max-w-full items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold {{ $isMe ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-50' : 'border-sky-200 bg-sky-50 text-sky-700' }} hover:opacity-90">
+                                                            <span class="truncate">{{ $comment->link_url }}</span>
+                                                            <span aria-hidden="true">↗</span>
                                                         </a>
+                                                    @endif
+                                                    @if($comment->attachment)
+                                                        <div class="{{ $comment->message || $comment->link_url ? 'mt-3' : '' }} space-y-2">
+                                                            <img src="{{ asset('storage/' . $comment->attachment) }}" class="max-h-40 rounded-xl object-cover" alt="legacy attachment">
+                                                            <p class="text-[11px] {{ $isMe ? 'text-emerald-100' : 'text-slate-400' }}">Legacy file preview</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="mt-1.5 flex flex-wrap items-center gap-2 {{ $isMe ? 'justify-end' : '' }}" id="reactions-{{ $comment->id }}">
+                                                    <button type="button"
+                                                        onclick="reactComment({{ $comment->id }}, 'up')"
+                                                        id="btn-up-{{ $comment->id }}"
+                                                        class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition
+                                                            {{ $myReact === 'up' ? 'bg-emerald-100 text-emerald-700 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600' }}">
+                                                        👍 <span id="up-count-{{ $comment->id }}">{{ $ups > 0 ? $ups : '' }}</span>
+                                                    </button>
+                                                    <button type="button"
+                                                        onclick="reactComment({{ $comment->id }}, 'down')"
+                                                        id="btn-down-{{ $comment->id }}"
+                                                        class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition
+                                                            {{ $myReact === 'down' ? 'bg-rose-100 text-rose-700 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600' }}">
+                                                        👎 <span id="down-count-{{ $comment->id }}">{{ $downs > 0 ? $downs : '' }}</span>
+                                                    </button>
+                                                    <button type="button"
+                                                        onclick="toggleReplyForm({{ $comment->id }})"
+                                                        class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-200">
+                                                        Reply
+                                                    </button>
+                                                </div>
+                                                <div id="replies-{{ $comment->id }}" class="mt-3 space-y-3 border-l border-slate-200/80 pl-4 sm:pl-6">
+                                                    @foreach($comment->replies as $reply)
+                                                        @php
+                                                            $replyIsMe = $reply->user_id === auth()->id();
+                                                            $replyUps = $reply->reactions->where('type', 'up')->count();
+                                                            $replyDowns = $reply->reactions->where('type', 'down')->count();
+                                                            $replyMyReact = $reply->reactions->where('user_id', auth()->id())->first()?->type;
+                                                        @endphp
+                                                        <div class="comment-reply flex {{ $replyIsMe ? 'justify-end' : 'justify-start' }}" data-comment-id="{{ $reply->id }}">
+                                                            @if(!$replyIsMe)
+                                                                <span class="mr-2 mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+                                                                    {{ strtoupper(substr($reply->user->name, 0, 1)) }}
+                                                                </span>
+                                                            @endif
+                                                            <div class="max-w-[82%]">
+                                                                <div class="mb-1 flex items-center gap-2 {{ $replyIsMe ? 'justify-end' : '' }}">
+                                                                    <span class="text-[11px] font-semibold {{ $replyIsMe ? 'text-emerald-600' : 'text-slate-700' }}">{{ $reply->user->name }}</span>
+                                                                    <span class="text-[10px] text-slate-400">{{ $reply->created_at->format('M d · h:i A') }}</span>
+                                                                </div>
+                                                                <div class="rounded-2xl px-3.5 py-2.5 text-sm {{ $replyIsMe ? 'rounded-tr-sm bg-emerald-100 text-emerald-950' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800' }}">
+                                                                    @if($reply->message)
+                                                                        <p class="whitespace-pre-line">{{ $reply->message }}</p>
+                                                                    @endif
+                                                                    @if($reply->link_url)
+                                                                        <a href="{{ $reply->link_url }}" target="_blank" rel="noopener noreferrer"
+                                                                           class="{{ $reply->message ? 'mt-3' : '' }} inline-flex max-w-full items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold {{ $replyIsMe ? 'border-emerald-300 bg-white/60 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-700' }} hover:opacity-90">
+                                                                            <span class="truncate">{{ $reply->link_url }}</span>
+                                                                            <span aria-hidden="true">↗</span>
+                                                                        </a>
+                                                                    @endif
+                                                                    @if($reply->attachment)
+                                                                        <div class="{{ $reply->message || $reply->link_url ? 'mt-3' : '' }} space-y-2">
+                                                                            <img src="{{ asset('storage/' . $reply->attachment) }}" class="max-h-36 rounded-xl object-cover" alt="legacy attachment">
+                                                                            <p class="text-[11px] {{ $replyIsMe ? 'text-emerald-700' : 'text-slate-400' }}">Legacy file preview</p>
+                                                                        </div>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="mt-1.5 flex flex-wrap items-center gap-2 {{ $replyIsMe ? 'justify-end' : '' }}" id="reactions-{{ $reply->id }}">
+                                                                    <button type="button"
+                                                                        onclick="reactComment({{ $reply->id }}, 'up')"
+                                                                        id="btn-up-{{ $reply->id }}"
+                                                                        class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition
+                                                                            {{ $replyMyReact === 'up' ? 'bg-emerald-100 text-emerald-700 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600' }}">
+                                                                        👍 <span id="up-count-{{ $reply->id }}">{{ $replyUps > 0 ? $replyUps : '' }}</span>
+                                                                    </button>
+                                                                    <button type="button"
+                                                                        onclick="reactComment({{ $reply->id }}, 'down')"
+                                                                        id="btn-down-{{ $reply->id }}"
+                                                                        class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition
+                                                                            {{ $replyMyReact === 'down' ? 'bg-rose-100 text-rose-700 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600' }}">
+                                                                        👎 <span id="down-count-{{ $reply->id }}">{{ $replyDowns > 0 ? $replyDowns : '' }}</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            @if($replyIsMe)
+                                                                <span class="ml-2 mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                                                                    {{ strtoupper(substr($reply->user->name, 0, 1)) }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                                <form id="reply-form-{{ $comment->id }}"
+                                                    data-task-id="{{ $task->id }}"
+                                                    data-parent-id="{{ $comment->id }}"
+                                                    method="POST"
+                                                    action="{{ route('tasks.comments.store', $task->id) }}"
+                                                    class="comment-form-ajax mt-3 hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                                    @csrf
+                                                    <input type="hidden" name="parent_id" value="{{ $comment->id }}">
+                                                    <div class="space-y-2">
+                                                        <input type="text" name="message" placeholder="Write a reply…"
+                                                            class="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                                        <div class="flex items-center gap-2">
+                                                            <input type="text" name="link_url" placeholder="Paste a link (optional)"
+                                                                class="flex-1 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                                            <button type="submit" class="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500">
+                                                                Send
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                @endif
+                                                </form>
                                             </div>
-                                            {{-- Reaction buttons --}}
-                                            <div class="mt-1.5 flex items-center gap-2 {{ $isMe ? 'justify-end' : '' }}"
-                                                 id="reactions-{{ $comment->id }}">
-                                                <button type="button"
-                                                    onclick="reactComment({{ $comment->id }}, 'up')"
-                                                    id="btn-up-{{ $comment->id }}"
-                                                    class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition
-                                                        {{ $myReact === 'up' ? 'bg-emerald-100 text-emerald-700 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600' }}">
-                                                    👍 <span id="up-count-{{ $comment->id }}">{{ $ups > 0 ? $ups : '' }}</span>
-                                                </button>
-                                                <button type="button"
-                                                    onclick="reactComment({{ $comment->id }}, 'down')"
-                                                    id="btn-down-{{ $comment->id }}"
-                                                    class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition
-                                                        {{ $myReact === 'down' ? 'bg-rose-100 text-rose-700 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600' }}">
-                                                    👎 <span id="down-count-{{ $comment->id }}">{{ $downs > 0 ? $downs : '' }}</span>
-                                                </button>
-                                            </div>
+                                            @if($isMe)
+                                                <span class="ml-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+                                                    {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+                                                </span>
+                                            @endif
                                         </div>
-                                        @if($isMe)
-                                            <span class="ml-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
-                                                {{ strtoupper(substr($comment->user->name, 0, 1)) }}
-                                            </span>
-                                        @endif
                                     </div>
                                 @empty
                                     <p class="py-4 text-center text-xs text-slate-400" id="no-comments-{{ $task->id }}">No comments yet. Start the conversation.</p>
@@ -350,24 +442,21 @@
                             </div>
 
                             {{-- Input bar --}}
-                            <form id="comment-form-{{ $task->id }}" data-task-id="{{ $task->id }}" method="POST" action="{{ route('tasks.comments.store', $task->id) }}" enctype="multipart/form-data"
+                            <form id="comment-form-{{ $task->id }}" data-task-id="{{ $task->id }}" method="POST" action="{{ route('tasks.comments.store', $task->id) }}"
                                 class="comment-form-ajax border-t border-slate-100 px-4 py-3">
                                 @csrf
-                                <div class="flex items-center gap-2">
+                                <div class="space-y-2">
                                     <input type="text" name="message" placeholder="Write a message…"
-                                        class="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
-                                    <label class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50" title="Attach file">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                                        </svg>
-                                        <input type="file" name="attachment" class="hidden" onchange="updateFileLabel(this, {{ $task->id }})">
-                                    </label>
-                                    <span id="file-name-{{ $task->id }}" class="hidden max-w-[80px] truncate text-[11px] text-slate-500"></span>
-                                    <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-500">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                                        </svg>
-                                    </button>
+                                        class="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" name="link_url" placeholder="Paste a link (optional)"
+                                            class="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                        <button type="submit" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-500">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -502,11 +591,22 @@ document.addEventListener('DOMContentLoaded', function () {
         $commentIdsByTask = [];
         $latestCommentTimestamp = null;
         foreach ($project->tasks as $task) {
-            $comments = $task->comments->whereNull('parent_id')->sortBy('created_at');
-            $commentIdsByTask[$task->id] = $comments->pluck('id')->all();
+            $comments = $task->comments->sortBy('created_at');
+            $commentIdsByTask[$task->id] = $comments
+                ->flatMap(function ($comment) {
+                    return collect([$comment->id])->merge($comment->replies->pluck('id'));
+                })
+                ->values()
+                ->all();
             foreach ($comments as $comment) {
                 if (!$latestCommentTimestamp || $comment->created_at > $latestCommentTimestamp) {
                     $latestCommentTimestamp = $comment->created_at;
+                }
+
+                foreach ($comment->replies as $reply) {
+                    if (!$latestCommentTimestamp || $reply->created_at > $latestCommentTimestamp) {
+                        $latestCommentTimestamp = $reply->created_at;
+                    }
                 }
             }
         }
@@ -570,33 +670,144 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // ── Attach file label ─────────────────────────────────────────────────
-    window.updateFileLabel = function(input, taskId) {
-        const span = document.getElementById(`file-name-${taskId}`);
-        if (!span) return;
-        if (input.files[0]) {
-            span.textContent = input.files[0].name;
-            span.classList.remove('hidden');
-        } else {
-            span.textContent = '';
-            span.classList.add('hidden');
+    window.toggleReplyForm = function(commentId) {
+        const form = document.getElementById(`reply-form-${commentId}`);
+        if (!form) return;
+        form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+            form.querySelector('input[name="message"]')?.focus();
         }
     };
 
+    const escapeHtml = (value = '') => value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const renderLink = (url, isMe, tone = 'root') => {
+        if (!url) return '';
+        const style = tone === 'reply'
+            ? (isMe ? 'border-emerald-300 bg-white/60 text-emerald-800' : 'border-sky-200 bg-sky-50 text-sky-700')
+            : (isMe ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-50' : 'border-sky-200 bg-sky-50 text-sky-700');
+
+        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex max-w-full items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold ${style} hover:opacity-90"><span class="truncate">${escapeHtml(url)}</span><span aria-hidden="true">↗</span></a>`;
+    };
+
+    const renderLegacyAttachment = (attachment, isMe, tone = 'root') => {
+        if (!attachment) return '';
+        const noteClass = tone === 'reply'
+            ? (isMe ? 'text-emerald-700' : 'text-slate-400')
+            : (isMe ? 'text-emerald-100' : 'text-slate-400');
+        const imageHeight = tone === 'reply' ? 'max-h-36' : 'max-h-40';
+
+        return `<div class="mt-3 space-y-2"><img src="/storage/${escapeHtml(attachment)}" class="${imageHeight} rounded-xl object-cover" alt="legacy attachment"><p class="text-[11px] ${noteClass}">Legacy file preview</p></div>`;
+    };
+
+    const renderReactionButtons = (commentId, justify = '', active = null) => {
+        const upClass = active === 'up'
+            ? 'bg-emerald-100 text-emerald-700 font-semibold'
+            : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600';
+        const downClass = active === 'down'
+            ? 'bg-rose-100 text-rose-700 font-semibold'
+            : 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600';
+
+        return `<div class="mt-1.5 flex flex-wrap items-center gap-2 ${justify}" id="reactions-${commentId}">
+            <button type="button" onclick="reactComment(${commentId}, 'up')" id="btn-up-${commentId}" class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition ${upClass}">👍 <span id="up-count-${commentId}"></span></button>
+            <button type="button" onclick="reactComment(${commentId}, 'down')" id="btn-down-${commentId}" class="reaction-btn inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition ${downClass}">👎 <span id="down-count-${commentId}"></span></button>
+        </div>`;
+    };
+
+    const renderReplyForm = (commentId, taskId) => `<form id="reply-form-${commentId}" data-task-id="${taskId}" data-parent-id="${commentId}" method="POST" action="/tasks/${taskId}/comments" class="comment-form-ajax mt-3 hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="parent_id" value="${commentId}">
+        <div class="space-y-2">
+            <input type="text" name="message" placeholder="Write a reply…" class="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+            <div class="flex items-center gap-2">
+                <input type="text" name="link_url" placeholder="Paste a link (optional)" class="flex-1 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                <button type="submit" class="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500">Send</button>
+            </div>
+        </div>
+    </form>`;
+
+    const buildReplyMarkup = (c, isMe) => `
+        <div class="comment-reply flex ${isMe ? 'justify-end' : 'justify-start'}" data-comment-id="${c.id}">
+            ${!isMe ? `<span class="mr-2 mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">${escapeHtml(c.user_name.charAt(0).toUpperCase())}</span>` : ''}
+            <div class="max-w-[82%]">
+                <div class="mb-1 flex items-center gap-2 ${isMe ? 'justify-end' : ''}">
+                    <span class="text-[11px] font-semibold ${isMe ? 'text-emerald-600' : 'text-slate-700'}">${escapeHtml(c.user_name)}</span>
+                    <span class="text-[10px] text-slate-400">${escapeHtml(c.created_label ?? c.created_at)}</span>
+                </div>
+                <div class="rounded-2xl px-3.5 py-2.5 text-sm ${isMe ? 'rounded-tr-sm bg-emerald-100 text-emerald-950' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800'}">
+                    ${c.message ? `<p class="whitespace-pre-line">${escapeHtml(c.message)}</p>` : ''}
+                    ${renderLink(c.link_url, isMe, 'reply')}
+                    ${renderLegacyAttachment(c.attachment, isMe, 'reply')}
+                </div>
+                ${renderReactionButtons(c.id, isMe ? 'justify-end' : '')}
+            </div>
+            ${isMe ? `<span class="ml-2 mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">${escapeHtml(c.user_name.charAt(0).toUpperCase())}</span>` : ''}
+        </div>`;
+
+    const buildThreadMarkup = (c, isMe) => `
+        <div class="comment-thread" data-task="${c.task_id}" data-comment-id="${c.id}">
+            <div class="comment-bubble flex ${isMe ? 'justify-end' : 'justify-start'}">
+                ${!isMe ? `<span class="mr-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">${escapeHtml(c.user_name.charAt(0).toUpperCase())}</span>` : ''}
+                <div class="max-w-[85%]">
+                    <div class="mb-1 flex items-center gap-2 ${isMe ? 'justify-end' : ''}">
+                        <span class="text-xs font-semibold ${isMe ? 'text-emerald-600' : 'text-slate-700'}">${escapeHtml(c.user_name)}</span>
+                        <span class="text-[10px] text-slate-400">${escapeHtml(c.created_label ?? c.created_at)}</span>
+                    </div>
+                    <div class="rounded-2xl px-4 py-2.5 text-sm ${isMe ? 'rounded-tr-sm bg-emerald-600 text-white' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800'}">
+                        ${c.message ? `<p class="whitespace-pre-line">${escapeHtml(c.message)}</p>` : ''}
+                        ${renderLink(c.link_url, isMe, 'root')}
+                        ${renderLegacyAttachment(c.attachment, isMe, 'root')}
+                    </div>
+                    <div class="mt-1.5 flex flex-wrap items-center gap-2 ${isMe ? 'justify-end' : ''}" id="reactions-${c.id}">
+                        ${renderReactionButtons(c.id, '').replace(/^<div[^>]*>|<\/div>$/g, '')}
+                        <button type="button" onclick="toggleReplyForm(${c.id})" class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-200">Reply</button>
+                    </div>
+                    <div id="replies-${c.id}" class="mt-3 space-y-3 border-l border-slate-200/80 pl-4 sm:pl-6"></div>
+                    ${renderReplyForm(c.id, c.task_id)}
+                </div>
+                ${isMe ? `<span class="ml-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">${escapeHtml(c.user_name.charAt(0).toUpperCase())}</span>` : ''}
+            </div>
+        </div>`;
+
     // ── Comment append helper ─────────────────────────────────────────────
     const appendComment = (c) => {
-        const container = document.getElementById('task-comments-' + c.task_id);
-        if (!container) return;
+        const isMe = c.user_id === {{ auth()->id() }};
+        if (c.parent_id) {
+            const repliesContainer = document.getElementById(`replies-${c.parent_id}`);
+            if (!repliesContainer || repliesContainer.querySelector(`[data-comment-id="${c.id}"]`)) return;
+            const div = document.createElement('div');
+            div.innerHTML = buildReplyMarkup(c, isMe).trim();
+            repliesContainer.appendChild(div.firstElementChild);
 
-        // Remove empty-state placeholder
+            const replyForm = document.getElementById(`reply-form-${c.parent_id}`);
+            if (replyForm) {
+                replyForm.reset();
+                replyForm.classList.add('hidden');
+            }
+
+            const thread = document.querySelector(`.comment-thread[data-comment-id="${c.parent_id}"]`);
+            if (thread) {
+                thread.scrollIntoView({ block: 'nearest' });
+            }
+
+            const commentsWrap = repliesContainer.closest('[id^="task-comments-"]');
+            if (commentsWrap) commentsWrap.scrollTop = commentsWrap.scrollHeight;
+            return;
+        }
+
+        const container = document.getElementById('task-comments-' + c.task_id);
+        if (!container || container.querySelector(`.comment-thread[data-comment-id="${c.id}"]`)) return;
+
         const placeholder = document.getElementById('no-comments-' + c.task_id);
         if (placeholder) placeholder.remove();
 
-        const isMe = c.user_id === {{ auth()->id() }};
         const expanded = !!toggleStates[c.task_id];
-
-        // Mark previous last bubble as older (hide if not expanded)
-        const prev = container.querySelector('.comment-bubble:last-child');
+        const prev = container.querySelector('.comment-thread:last-child');
         if (prev) {
             prev.classList.add('older-comment');
             prev.dataset.task = c.task_id;
@@ -604,30 +815,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const div = document.createElement('div');
-        div.className = `comment-bubble flex ${isMe ? 'justify-end' : 'justify-start'}`;
-        div.dataset.task = c.task_id;
-        div.innerHTML = `
-            ${!isMe ? `<span class="mr-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">${c.user_name.charAt(0).toUpperCase()}</span>` : ''}
-            <div class="max-w-[75%]">
-                <div class="mb-1 flex items-center gap-2 ${isMe ? 'justify-end' : ''}">
-                    <span class="text-xs font-semibold ${isMe ? 'text-emerald-600' : 'text-slate-700'}">${c.user_name}</span>
-                    <span class="text-[10px] text-slate-400">${c.created_at}</span>
-                </div>
-                <div class="rounded-2xl px-4 py-2.5 text-sm ${isMe ? 'rounded-tr-sm bg-emerald-600 text-white' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800'}">
-                    ${c.message ? `<p>${c.message}</p>` : ''}
-                    ${c.attachment ? `<div class="${c.message ? 'mt-2' : ''}">
-                        <img src="/storage/${c.attachment}" class="max-h-40 rounded-xl object-cover">
-                        <a href="/task-comments/${c.id}/download" class="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold underline ${isMe ? 'text-emerald-200' : 'text-slate-500'} hover:no-underline">↓ Download</a>
-                    </div>` : ''}
-                </div>
-            </div>
-            ${isMe ? `<span class="ml-2 mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">${c.user_name.charAt(0).toUpperCase()}</span>` : ''}
-        `;
-        container.appendChild(div);
+        div.innerHTML = buildThreadMarkup(c, isMe).trim();
+        container.appendChild(div.firstElementChild);
 
-        // Update toggle label count
         if (!expanded) {
-            const total = container.querySelectorAll('.comment-bubble').length;
+            const total = container.querySelectorAll('.comment-thread').length;
             const lbl = document.getElementById(`toggle-label-${c.task_id}`);
             if (lbl) lbl.textContent = `${total} comment${total !== 1 ? 's' : ''}`;
         }
@@ -680,15 +872,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Create Task modal ─────────────────────────────────────────────────
     const taskModal = document.getElementById('createTaskModal');
-    document.getElementById('openCreateTaskModal').addEventListener('click', () => {
+    document.getElementById('openCreateTaskModal')?.addEventListener('click', () => {
         taskModal.classList.remove('hidden');
         taskModal.classList.add('flex');
     });
-    document.getElementById('closeCreateTaskModal').addEventListener('click', () => {
+    document.getElementById('closeCreateTaskModal')?.addEventListener('click', () => {
         taskModal.classList.add('hidden');
         taskModal.classList.remove('flex');
     });
-    taskModal.addEventListener('click', e => {
+    taskModal?.addEventListener('click', e => {
         if (e.target === taskModal) {
             taskModal.classList.add('hidden');
             taskModal.classList.remove('flex');
@@ -696,15 +888,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     // Auto-reopen on validation error
     @if($errors->hasAny(['title','start_date','end_date']))
-        taskModal.classList.remove('hidden');
-        taskModal.classList.add('flex');
+        if (taskModal) { taskModal.classList.remove('hidden'); taskModal.classList.add('flex'); }
     @endif
 
-    // ── Attach file label ─────────────────────────────────────────────────
-    document.querySelectorAll('input[type="file"]').forEach(input => {
-        input.addEventListener('change', function () {
-            const label = this.closest('label')?.querySelector('span');
-            if (label) label.textContent = this.files[0]?.name ?? 'Attach';
+    // ── Auto-normalise link inputs (e.g. sgpro.co → https://sgpro.co) ────
+    const normaliseUrl = (raw) => {
+        if (!raw) return raw;
+        const trimmed = raw.trim();
+        if (!trimmed) return trimmed;
+        if (/^(https?:\/\/)/i.test(trimmed)) return trimmed;
+        return 'https://' + trimmed;
+    };
+
+    document.querySelectorAll('input[name="link_url"]').forEach(input => {
+        input.addEventListener('blur', function () {
+            if (this.value.trim()) this.value = normaliseUrl(this.value);
         });
     });
 
@@ -713,6 +911,10 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const taskId = this.dataset.taskId;
+            const linkInput = this.querySelector('input[name="link_url"]');
+            if (linkInput && linkInput.value.trim()) {
+                linkInput.value = normaliseUrl(linkInput.value);
+            }
             const fd     = new FormData(this);
             const btn    = this.querySelector('button[type="submit"]');
             if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
@@ -726,11 +928,11 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(c => {
                 appendComment(c);
                 knownCommentIds[c.task_id] = knownCommentIds[c.task_id] ?? [];
-                knownCommentIds[c.task_id].push(c.id);
+                if (!knownCommentIds[c.task_id].includes(c.id)) {
+                    knownCommentIds[c.task_id].push(c.id);
+                }
                 lastCommentTimestamp = c.created_at;
                 this.reset();
-                const fileSpan = document.getElementById(`file-name-${taskId}`);
-                if (fileSpan) { fileSpan.textContent = ''; fileSpan.classList.add('hidden'); }
             })
             .catch(() => { this.submit(); })
             .finally(() => { if (btn) { btn.disabled = false; btn.style.opacity = ''; } });

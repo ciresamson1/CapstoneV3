@@ -116,6 +116,8 @@ class ProjectController extends Controller
         $project = Project::with([
             'tasks.comments.user',
             'tasks.comments.reactions',
+            'tasks.comments.replies.user',
+            'tasks.comments.replies.reactions',
             'tasks.assignedTo',
         ])->findOrFail($id);
 

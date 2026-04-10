@@ -17,16 +17,20 @@ class TaskCommentCreated implements ShouldBroadcastNow
 
     public function __construct(TaskComment $comment)
     {
-        $comment->load('user','task');
+        $comment->load('user', 'task');
 
         $this->comment = [
             'id' => $comment->id,
             'task_id' => $comment->task_id,
+            'parent_id' => $comment->parent_id,
+            'user_id' => $comment->user_id,
             'user_name' => $comment->user->name,
             'user_role' => $comment->user->role,
             'message' => $comment->message,
+            'link_url' => $comment->link_url,
             'attachment' => $comment->attachment,
-            'created_at' => $comment->created_at->diffForHumans(),
+            'created_at' => $comment->created_at->toISOString(),
+            'created_label' => $comment->created_at->format('M d · h:i A'),
             'project_id' => $comment->task->project_id,
         ];
     }

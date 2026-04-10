@@ -14,6 +14,7 @@ class TaskComment extends Model
         'parent_id',
         'user_id',
         'message',
+        'link_url',
         'attachment',
         'type'
     ];

@@ -8,7 +8,7 @@
         <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
             <div class="mb-10">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-950 font-bold">PC</div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-white p-1.5"><img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain"></div>
                     <div>
                         <h1 class="text-lg font-semibold">PCMS Portal</h1>
                         <p class="text-sm text-slate-400">Project Coordination</p>
@@ -135,13 +135,33 @@
                     </div>
                 </div>
                 <div class="overflow-x-auto px-6 py-6">
-                    <table class="min-w-full text-left text-sm text-slate-600">
+                    <table id="projectHealthTable" class="min-w-full text-left text-sm text-slate-600">
                         <thead>
                             <tr>
-                                <th class="pb-4 pr-8 font-semibold text-slate-900">Project Name</th>
-                                <th class="pb-4 pr-8 font-semibold text-slate-900">Progress</th>
-                                <th class="pb-4 pr-8 font-semibold text-slate-900">Status</th>
-                                <th class="pb-4 font-semibold text-slate-900">Team Load</th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">
+                                    <div class="flex items-center gap-1">Project Name
+                                        <button onclick="sortTable(0,'asc')" class="rounded p-0.5 hover:bg-slate-100" title="A→Z">▲</button>
+                                        <button onclick="sortTable(0,'desc')" class="rounded p-0.5 hover:bg-slate-100" title="Z→A">▼</button>
+                                    </div>
+                                </th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">
+                                    <div class="flex items-center gap-1">Progress
+                                        <button onclick="sortTable(1,'asc')" class="rounded p-0.5 hover:bg-slate-100" title="Low→High">▲</button>
+                                        <button onclick="sortTable(1,'desc')" class="rounded p-0.5 hover:bg-slate-100" title="High→Low">▼</button>
+                                    </div>
+                                </th>
+                                <th class="pb-4 pr-8 font-semibold text-slate-900">
+                                    <div class="flex items-center gap-1">Status
+                                        <button onclick="sortTable(2,'asc')" class="rounded p-0.5 hover:bg-slate-100" title="A→Z">▲</button>
+                                        <button onclick="sortTable(2,'desc')" class="rounded p-0.5 hover:bg-slate-100" title="Z→A">▼</button>
+                                    </div>
+                                </th>
+                                <th class="pb-4 font-semibold text-slate-900">
+                                    <div class="flex items-center gap-1">Team Load
+                                        <button onclick="sortTable(3,'asc')" class="rounded p-0.5 hover:bg-slate-100" title="Low→High">▲</button>
+                                        <button onclick="sortTable(3,'desc')" class="rounded p-0.5 hover:bg-slate-100" title="High→Low">▼</button>
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -492,5 +512,30 @@
     }
 
     createTeamChart();
+</script>
+
+<script>
+function sortTable(colIndex, direction) {
+    const table = document.getElementById('projectHealthTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+        const aCell = a.cells[colIndex];
+        const bCell = b.cells[colIndex];
+        if (!aCell || !bCell) return 0;
+        const aText = aCell.querySelector('[style*="width"]')
+            ? parseFloat(aCell.querySelector('span').textContent)
+            : aCell.textContent.trim();
+        const bText = bCell.querySelector('[style*="width"]')
+            ? parseFloat(bCell.querySelector('span').textContent)
+            : bCell.textContent.trim();
+        const aVal = isNaN(aText) ? aText.toString().toLowerCase() : parseFloat(aText);
+        const bVal = isNaN(bText) ? bText.toString().toLowerCase() : parseFloat(bText);
+        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+    rows.forEach(row => tbody.appendChild(row));
+}
 </script>
 @endsection

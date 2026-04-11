@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TaskChanged;
 use App\Models\Task;
 use App\Models\ActivityLog;
+use App\Models\ProgressLog;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -96,6 +98,14 @@ class TaskController extends Controller
         $project = Project::find($projectId);
         ActivityLog::record('created_task', 'Created task "' . $request->title . '" in project "' . ($project?->name ?? 'Unknown') . '"', $task);
 
+        try {
+            broadcast(new TaskChanged($task, 'created'))->toOthers();
+        } catch (\Throwable $e) {}
+
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['status' => 'created', 'task_id' => $task->id]);
+        }
+
         return redirect()->route('projects.show', $projectId)->with('task_created', 'Task created successfully.');
     }
 
@@ -115,12 +125,25 @@ class TaskController extends Controller
     {
         $task = \App\Models\Task::findOrFail($id);
 
+        $oldProgress    = $task->progress;
         $task->progress = $task->progress == 100 ? 0 : 100;
         $task->status   = $task->progress == 100 ? 'completed' : 'pending';
         $task->save();
 
+        ProgressLog::create([
+            'type'         => 'task',
+            'reference_id' => $task->id,
+            'old_progress' => $oldProgress,
+            'new_progress' => $task->progress,
+            'updated_by'   => auth()->id(),
+        ]);
+
         $label = $task->progress == 100 ? 'completed' : 'reopened';
         ActivityLog::record('updated_task', 'Marked task "' . $task->title . '" as ' . $label, $task);
+
+        try {
+            broadcast(new TaskChanged($task, 'toggled'))->toOthers();
+        } catch (\Throwable $e) {}
 
         return response()->json(['status' => 'ok', 'progress' => $task->progress]);
     }
@@ -137,6 +160,8 @@ class TaskController extends Controller
             'status'     => 'required|in:pending,in_progress,completed',
         ]);
 
+        $oldProgress = $task->progress;
+
         $task->update([
             'title'       => $request->title,
             'description' => $request->description,
@@ -147,9 +172,42 @@ class TaskController extends Controller
             'status'      => $request->status,
         ]);
 
+        if ($task->progress !== $oldProgress) {
+            ProgressLog::create([
+                'type'         => 'task',
+                'reference_id' => $task->id,
+                'old_progress' => $oldProgress,
+                'new_progress' => $task->progress,
+                'updated_by'   => auth()->id(),
+            ]);
+        }
+
         ActivityLog::record('updated_task', 'Updated task "' . $task->title . '"', $task);
+
+        try {
+            broadcast(new TaskChanged($task->fresh('assignedTo'), 'updated'))->toOthers();
+        } catch (\Throwable $e) {}
+
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['status' => 'updated', 'task_id' => $task->id]);
+        }
 
         return redirect()->back()->with('status', 'Task updated.');
     }
 
+    public function taskCard($projectId, $taskId)
+    {
+        $task = Task::with([
+            'assignedTo',
+            'comments' => function ($q) {
+                $q->with(['user', 'reactions', 'replies.user', 'replies.reactions']);
+            },
+        ])->findOrFail($taskId);
+
+        if ((int) $task->project_id !== (int) $projectId) {
+            abort(404);
+        }
+
+        return view('projects._task-card', compact('task'));
+    }
 }

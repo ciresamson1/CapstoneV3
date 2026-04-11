@@ -93,6 +93,10 @@ Route::middleware(['auth'])->group(function () {
         [TaskController::class, 'update']
     )->name('tasks.update');
 
+    Route::get('/projects/{project}/tasks/{task}/card',
+        [TaskController::class, 'taskCard']
+    )->name('tasks.card');
+
     /*
     |--------------------------------------------------------------------------
     | Task Comments

@@ -8,7 +8,7 @@
         <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
             <div class="mb-10">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-950 font-bold">PC</div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-white p-1.5"><img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain"></div>
                     <div>
                         <h1 class="text-lg font-semibold">PCMS Portal</h1>
                         <p class="text-sm text-slate-400">Project Coordination</p>
@@ -62,12 +62,13 @@
             </div>
 
             {{-- Summary Cards --}}
-            <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 @php
-                    $totalTasks     = $tasks->count();
-                    $completedTasks = $tasks->where('status', 'completed')->count();
-                    $inProgressTasks = $tasks->where('status', 'in_progress')->count();
-                    $pendingTasks   = $tasks->where('status', 'pending')->count();
+                    $totalTasks      = $tasks->count();
+                    $completedTasks  = $tasks->filter(fn($t) => $t->effective_status === 'completed')->count();
+                    $inProgressTasks = $tasks->filter(fn($t) => $t->effective_status === 'in_progress')->count();
+                    $pendingTasks    = $tasks->filter(fn($t) => $t->effective_status === 'pending')->count();
+                    $overdueTasks    = $tasks->filter(fn($t) => $t->effective_status === 'overdue')->count();
                 @endphp
                 <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Total Tasks</p>
@@ -84,6 +85,10 @@
                 <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Pending</p>
                     <p class="mt-4 text-3xl font-bold text-amber-600">{{ $pendingTasks }}</p>
+                </div>
+                <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p class="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Overdue</p>
+                    <p class="mt-4 text-3xl font-bold text-red-600">{{ $overdueTasks }}</p>
                 </div>
             </section>
 
@@ -102,6 +107,7 @@
                     <option value="pending">Pending</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
+                    <option value="overdue">Overdue</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
             </div>
@@ -112,11 +118,12 @@
                     <table class="min-w-full text-left text-sm text-slate-600" id="tasksTable">
                         <thead class="border-b border-slate-200">
                             <tr>
-                                <th class="px-6 py-4 font-semibold text-slate-900">Task</th>
-                                <th class="px-6 py-4 font-semibold text-slate-900">Project</th>
-                                <th class="px-6 py-4 font-semibold text-slate-900">Assigned To</th>
-                                <th class="px-6 py-4 font-semibold text-slate-900">Status</th>
-                                <th class="px-6 py-4 font-semibold text-slate-900">Due Date</th>
+                                <th class="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">Task <button onclick="sortTable('tasksTable',0,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',0,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
+                                <th class="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">Project <button onclick="sortTable('tasksTable',1,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',1,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
+                                <th class="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">Assigned To <button onclick="sortTable('tasksTable',2,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',2,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
+                                <th class="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">Status <button onclick="sortTable('tasksTable',3,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',3,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
+                                <th class="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">Due Date <button onclick="sortTable('tasksTable',4,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',4,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
+                                <th class="px-6 py-4 font-semibold text-slate-900">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -124,26 +131,32 @@
                                 <tr class="task-row hover:bg-slate-50"
                                     data-title="{{ strtolower($task->title) }}"
                                     data-project="{{ $task->project_id }}"
-                                    data-status="{{ $task->status }}">
+                                    data-status="{{ $task->effective_status }}">
                                     <td class="px-6 py-4 font-medium text-slate-900">{{ $task->title }}</td>
                                     <td class="px-6 py-4">{{ $task->project->name ?? '—' }}</td>
                                     <td class="px-6 py-4">{{ $task->assignedTo->name ?? 'Unassigned' }}</td>
                                     <td class="px-6 py-4">
                                         <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
-                                            @if($task->status === 'completed') bg-emerald-100 text-emerald-700
-                                            @elseif($task->status === 'in_progress') bg-sky-100 text-sky-700
-                                            @elseif($task->status === 'pending') bg-amber-100 text-amber-700
+                                            @if($task->effective_status === 'completed') bg-emerald-100 text-emerald-700
+                                            @elseif($task->effective_status === 'overdue') bg-red-100 text-red-700
+                                            @elseif($task->effective_status === 'in_progress') bg-sky-100 text-sky-700
+                                            @elseif($task->effective_status === 'pending') bg-amber-100 text-amber-700
                                             @else bg-rose-100 text-rose-700 @endif">
-                                            {{ ucfirst(str_replace('_', ' ', $task->status)) }}
+                                            {{ $task->effective_status === 'overdue' ? 'Overdue' : ucfirst(str_replace('_', ' ', $task->effective_status)) }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ $task->end_date ? \Carbon\Carbon::parse($task->end_date)->format('M d, Y') : '—' }}
                                     </td>
+                                    <td class="px-6 py-4">
+                                        <a href="{{ route('client.projects.show', $task->project_id) }}#task-wrapper-{{ $task->id }}" title="View task & comments" class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-white transition hover:bg-brand-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </a>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500">No tasks found for your projects.</td>
+                                    <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-500">No tasks found for your projects.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -177,5 +190,22 @@
     searchInput.addEventListener('input', applyFilters);
     projectFilter.addEventListener('change', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
+
+function sortTable(tableId, colIndex, dir) {
+    const tbody = document.querySelector('#' + tableId + ' tbody');
+    const rows  = Array.from(tbody.rows).filter(r => r.cells.length > 1);
+    rows.sort(function(a, b) {
+        const get = c => (c ? c.textContent.trim().split('\n').map(s => s.trim()).filter(Boolean)[0] : '') || '';
+        const av = get(a.cells[colIndex]), bv = get(b.cells[colIndex]);
+        if (av === 'TBD' || av === '\u2014') return 1;
+        if (bv === 'TBD' || bv === '\u2014') return -1;
+        const an = parseFloat(av.replace(/[^0-9.-]/g, '')), bn = parseFloat(bv.replace(/[^0-9.-]/g, ''));
+        if (!isNaN(an) && !isNaN(bn)) return dir === 'asc' ? an - bn : bn - an;
+        const ad = new Date(av), bd = new Date(bv);
+        if (!isNaN(ad.getTime()) && !isNaN(bd.getTime())) return dir === 'asc' ? ad - bd : bd - ad;
+        return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+    rows.forEach(r => tbody.appendChild(r));
+}
 </script>
 @endsection

@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\Project;
+use App\Models\User;
+use App\Mail\TaskCommentMail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use App\Events\TaskCommentCreated;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
@@ -65,12 +68,55 @@ class TaskCommentController extends Controller
             'parent_id' => $parentComment?->id,
         ]);
 
-        $comment->load('user', 'task');
+        $comment->load('user', 'task.project');
 
         try {
             broadcast(new TaskCommentCreated($comment))->toOthers();
         } catch (\Throwable $e) {
             // Broadcast server unavailable — comment still saved
+        }
+
+        // Send email notification to project team (exclude the commenter)
+        try {
+            $project = $task->project;
+            if ($project) {
+                // Collect all user IDs who have previously commented on this task (thread participants)
+                $threadParticipantIds = TaskComment::where('task_id', $task->id)
+                    ->whereNotNull('user_id')
+                    ->pluck('user_id')
+                    ->unique();
+
+                // Team: project creator + task assignee + project client + thread participants
+                $allIds = collect([
+                    $project->created_by,
+                    $task->assigned_to,
+                    $project->client_id,
+                ])->merge($threadParticipantIds)
+                  ->filter()
+                  ->unique()
+                  ->reject(fn ($id) => $id === auth()->id());
+
+                // Also include all admins
+                $adminIds = User::where('role', 'admin')
+                    ->whereNotIn('id', $allIds->push(auth()->id())->unique()->all())
+                    ->pluck('id');
+
+                $recipientIds = $allIds->merge($adminIds)->unique();
+
+                $recipients = User::whereIn('id', $recipientIds)->whereNotNull('email')->get();
+
+                foreach ($recipients as $recipient) {
+                    // Use client-specific URL for client role
+                    if ($recipient->role === 'client') {
+                        $taskUrl = url('/client/projects/' . $project->id . '#task-wrapper-' . $task->id);
+                    } else {
+                        $taskUrl = url('/projects/' . $project->id . '#task-wrapper-' . $task->id);
+                    }
+                    Mail::to($recipient->email)->send(new TaskCommentMail($comment, $taskUrl));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Mail failure is non-fatal
         }
 
         $commentPreview = $comment->message
@@ -87,7 +133,7 @@ class TaskCommentController extends Controller
             $task
         );
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return response()->json($this->serializeComment($comment));
         }
 

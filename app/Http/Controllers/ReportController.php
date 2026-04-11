@@ -303,7 +303,7 @@ class ReportController extends Controller
                             'taskDelayRate', 'onTimeRate', 'timelineChanges', 'riskScore');
 
             // Build flat task table: project → task
-            $tasks = $allTasks->map(function ($t) use ($today) {
+            $tasks = $allTasks->map(function ($t) use ($today, $projects) {
                 $projectName = $t->relationLoaded('project') ? optional($t->project)->name : ($projects->firstWhere('id', $t->project_id)?->name ?? '—');
                 $overdue = $t->end_date && Carbon::parse($t->end_date)->lt($today) && $t->progress < 100;
                 return [

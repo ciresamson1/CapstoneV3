@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Registration | PCMS</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
@@ -28,39 +29,39 @@
 
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Username</label>
-                        <input type="text" name="username" value="{{ old('username') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" placeholder="johndoe" required>
+                        <input type="text" name="username" value="{{ old('username') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" placeholder="johndoe" required>
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">First Name</label>
-                        <input type="text" name="first_name" value="{{ old('first_name') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" placeholder="John" required>
+                        <input type="text" name="first_name" value="{{ old('first_name') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" placeholder="John" required>
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Last Name</label>
-                        <input type="text" name="last_name" value="{{ old('last_name') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" placeholder="Doe" required>
+                        <input type="text" name="last_name" value="{{ old('last_name') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" placeholder="Doe" required>
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Position</label>
-                        <input type="text" name="position" value="{{ old('position') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" placeholder="Project Manager" required>
+                        <input type="text" name="position" value="{{ old('position') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" placeholder="Project Manager" required>
                     </div>
                     <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Company</label>
-                        <input type="text" name="company" value="{{ old('company') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" placeholder="Your company" required>
+                        <input type="text" name="company" value="{{ old('company') }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" placeholder="Your company" required>
                     </div>
                     <div class="md:col-span-2">
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Email</label>
-                        <input type="email" name="email" value="{{ old('email', request('email')) }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" placeholder="you@company.com" required>
+                        <input type="email" name="email" value="{{ old('email', request('email')) }}" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" placeholder="you@company.com" required>
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
-                        <input type="password" name="password" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" required>
+                        <input type="password" name="password" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" required>
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">Confirm Password</label>
-                        <input type="password" name="password_confirmation" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100" required>
+                        <input type="password" name="password_confirmation" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-50" required>
                     </div>
 
                     <div class="pt-2 md:col-span-2">
-                        <button type="submit" class="w-full rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Account</button>
+                        <button type="submit" class="w-full rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-600">Create Account</button>
                     </div>
                 </form>
             </div>

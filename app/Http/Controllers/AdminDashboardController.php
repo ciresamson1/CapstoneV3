@@ -97,42 +97,42 @@ class AdminDashboardController extends Controller
                 'title' => 'Overdue Tasks',
                 'value' => $overdueTasks,
                 'color' => 'red',
-                'url' => route('admin.dashboard', ['filter' => 'overdue']),
+                'url' => route('admin.tasks.index'),
                 'note' => 'Needs immediate attention',
             ],
             [
                 'title' => 'Tasks Near Deadline',
                 'value' => $nearDeadlineTasks,
                 'color' => 'yellow',
-                'url' => route('admin.dashboard', ['filter' => 'near-deadline']),
+                'url' => route('admin.tasks.index'),
                 'note' => 'Due within 3 days',
             ],
             [
                 'title' => 'Active Projects',
                 'value' => $activeProjects,
                 'color' => 'green',
-                'url' => route('admin.dashboard', ['filter' => 'active-projects']),
+                'url' => route('projects.index'),
                 'note' => 'Currently in progress',
             ],
             [
                 'title' => 'Overall Completion',
                 'value' => $completionRate . '%',
                 'color' => $completionRate >= 80 ? 'green' : ($completionRate >= 50 ? 'yellow' : 'red'),
-                'url' => route('admin.dashboard', ['filter' => 'completion']),
+                'url' => route('projects.index'),
                 'note' => 'Average delivery status',
             ],
             [
                 'title' => 'Client Comments',
                 'value' => $clientComments,
                 'color' => 'blue',
-                'url' => route('admin.dashboard', ['filter' => 'client-comments']),
+                'url' => route('admin.dashboard') . '#client-activity',
                 'note' => 'Unread client feedback',
             ],
             [
                 'title' => 'Team Workload',
                 'value' => $workloadStatus,
                 'color' => $workloadStatus === 'Overloaded' ? 'red' : 'green',
-                'url' => route('admin.dashboard', ['filter' => 'workload']),
+                'url' => route('projects.index'),
                 'note' => 'Resource balance check',
             ],
         ];
@@ -140,32 +140,75 @@ class AdminDashboardController extends Controller
 
     private function buildAlerts(Carbon $today)
     {
-        $overdueGrouped = Task::with('project')
+        $overdueTasks = Task::with('project')
             ->whereDate('end_date', '<', $today)
             ->where('progress', '<', 100)
-            ->get()
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $overdueGrouped = $overdueTasks
             ->groupBy(fn ($task) => $task->project?->name ?? 'Unassigned')
             ->map(function ($tasks, $projectName) {
                 return [
                     'project' => $projectName,
-                    'count' => $tasks->count(),
+                    'count'   => $tasks->count(),
                     'summary' => $tasks->pluck('title')->take(3)->implode(', '),
                 ];
             })
             ->values();
 
-        $clientResponseCount = TaskComment::whereHas('user', function ($query) {
-            $query->where('role', 'client');
-        })
-        ->whereHas('task', function ($query) use ($today) {
-            $query->where('progress', '<', 100);
-        })
-        ->count();
+        $overdueItems = $overdueTasks->map(fn ($task) => [
+            'task_id'    => $task->id,
+            'project_id' => $task->project_id,
+            'title'      => $task->title,
+            'project'    => $task->project?->name ?? 'Unassigned',
+        ])->values();
+
+        $clientResponseExists = function ($q) {
+            $q->from('task_comments as tc')
+                ->join('users as u', 'u.id', '=', 'tc.user_id')
+                ->where('u.role', '!=', 'client')
+                ->whereNull('tc.parent_id')
+                ->whereColumn('tc.task_id', 'tasks.id')
+                ->whereRaw('tc.id = (SELECT MAX(id) FROM task_comments WHERE task_id = tasks.id AND parent_id IS NULL)');
+        };
+
+        $clientResponseCount = Task::where('progress', '<', 100)
+            ->whereExists($clientResponseExists)
+            ->count();
+
+        $clientResponseTasks = Task::with('project')
+            ->where('progress', '<', 100)
+            ->whereExists($clientResponseExists)
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn ($task) => [
+                'task_id'    => $task->id,
+                'project_id' => $task->project_id,
+                'title'      => $task->title,
+                'project'    => $task->project?->name ?? 'Unknown',
+            ])
+            ->values();
 
         $blockedTasksCount = Task::where('progress', '<', 30)
             ->whereDate('start_date', '<=', $today)
-            ->whereNull('assigned_to')
             ->count();
+
+        $blockedTasks = Task::with('project')
+            ->where('progress', '<', 30)
+            ->whereDate('start_date', '<=', $today)
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn ($task) => [
+                'task_id'    => $task->id,
+                'project_id' => $task->project_id,
+                'title'      => $task->title,
+                'project'    => $task->project?->name ?? 'Unknown',
+            ])
+            ->values();
 
         $recentUpdates = ProgressLog::with('user')
             ->latest()
@@ -185,19 +228,21 @@ class AdminDashboardController extends Controller
                 'color' => 'red',
                 'headline' => 'Overdue tasks by project',
                 'details' => $overdueGrouped->map(fn ($group) => $group['project'] . ' (' . $group['count'] . ')')->take(4)->implode(', '),
-                'items' => $overdueGrouped,
+                'items' => $overdueItems,
             ],
             [
-                'label' => 'Medium',
-                'color' => 'yellow',
+                'label'   => 'Medium',
+                'color'   => 'yellow',
                 'headline' => 'Client response needed',
                 'details' => $clientResponseCount . ' tasks waiting on client feedback',
+                'items'   => $clientResponseTasks,
             ],
             [
                 'label' => 'Medium',
                 'color' => 'yellow',
                 'headline' => 'Blocked tasks',
-                'details' => $blockedTasksCount . ' tasks with missing assignment or dependency issues',
+                'details' => $blockedTasksCount . ' tasks started but below 30% progress',
+                'items'   => $blockedTasks,
             ],
             [
                 'label' => 'Info',
@@ -211,6 +256,7 @@ class AdminDashboardController extends Controller
     private function buildProjectHealth(Carbon $today)
     {
         return Project::withCount(['tasks'])
+            ->latest()
             ->get()
             ->map(function ($project) use ($today) {
                 $progress = $project->progress;
@@ -268,6 +314,7 @@ class AdminDashboardController extends Controller
 
                 return [
                     'id' => $task->id,
+                    'project_id' => $task->project_id,
                     'title' => Str::limit($task->title, 30),
                     'project' => $task->project?->name ?? 'Unknown',
                     'project_description' => $task->project?->description ?? 'No description available.',
@@ -331,10 +378,12 @@ class AdminDashboardController extends Controller
         ->get()
         ->map(function ($comment) {
             return [
-                'project' => $comment->task->project?->name ?? 'Unknown',
-                'user' => $comment->user?->name ?? 'Client',
-                'message' => Str::limit($comment->message, 80),
-                'time' => $comment->created_at->diffForHumans(),
+                'project'    => $comment->task->project?->name ?? 'Unknown',
+                'project_id' => $comment->task->project?->id,
+                'task_id'    => $comment->task?->id,
+                'user'       => $comment->user?->name ?? 'Client',
+                'message'    => Str::limit($comment->message, 80),
+                'time'       => $comment->created_at->diffForHumans(),
             ];
         })
         ->values()

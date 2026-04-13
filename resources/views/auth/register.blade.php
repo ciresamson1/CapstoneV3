@@ -8,15 +8,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
-    <div class="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
-        <div class="w-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl">
-            <div class="border-b border-slate-200 bg-slate-950 px-6 py-8 text-white sm:px-10">
+    <div class="mx-auto flex min-h-screen w-full max-w-6xl items-start px-4 py-6 sm:items-center sm:px-6 sm:py-10 lg:px-8">
+        <div class="w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl sm:rounded-[2rem]">
+            <div class="border-b border-slate-200 bg-slate-950 px-5 py-7 text-white sm:px-10 sm:py-8">
                 <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">PCMS Invite</p>
                 <h1 class="mt-3 text-2xl font-semibold sm:text-3xl">Complete your account setup</h1>
                 <p class="mt-2 text-sm text-slate-300">Finish your profile to start collaborating in the project dashboard.</p>
             </div>
 
-            <div class="px-6 py-8 sm:px-10">
+            <div class="px-5 py-7 sm:px-10 sm:py-8">
                 @if ($errors->any())
                     <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                         {{ $errors->first() }}

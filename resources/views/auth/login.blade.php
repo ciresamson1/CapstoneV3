@@ -54,7 +54,7 @@
         </div>
 
         {{-- Right panel — login form --}}
-        <div class="flex flex-1 flex-col items-center justify-center px-8 py-12">
+        <div class="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
             <div class="w-full max-w-md">
 
                 {{-- Mobile brand --}}
@@ -66,7 +66,7 @@
                 </div>
 
                 <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Account Access</p>
-                <h2 class="mt-2 text-3xl font-bold text-slate-900">Sign in</h2>
+                <h2 class="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Sign in</h2>
                 <p class="mt-2 text-sm text-slate-500">Enter your credentials to access your dashboard.</p>
 
                 @if ($errors->any())

@@ -4,15 +4,29 @@
 <div class="min-h-screen overflow-x-hidden bg-slate-100">
     <div class="flex min-h-screen flex-col xl:flex-row">
 
+        <div class="flex items-center justify-between bg-slate-950 px-4 py-3 text-slate-100 xl:hidden">
+            <div class="text-sm font-semibold">PCMS Admin</div>
+            <button type="button" data-sidebar-toggle class="inline-flex items-center justify-center rounded-xl border border-slate-700 p-2 text-slate-100" aria-label="Open navigation menu" aria-controls="adminSidebar" aria-expanded="false">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+        </div>
+
+        <div id="adminSidebarBackdrop" class="fixed inset-0 z-30 hidden bg-slate-950/60 xl:hidden"></div>
+
         {{-- Sidebar --}}
-        <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
+        <aside id="adminSidebar" class="fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] shrink-0 -translate-x-full overflow-y-auto bg-slate-950 p-6 text-slate-100 transition-transform duration-200 xl:static xl:min-h-screen xl:w-80 xl:translate-x-0">
             <div class="mb-10">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-white p-1.5"><img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain"></div>
-                    <div>
-                        <h1 class="text-lg font-semibold">PCMS Admin</h1>
-                        <p class="text-sm text-slate-400">Project Coordination</p>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-white p-1.5"><img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain"></div>
+                        <div>
+                            <h1 class="text-lg font-semibold">PCMS Admin</h1>
+                            <p class="text-sm text-slate-400">Project Coordination</p>
+                        </div>
                     </div>
+                    <button type="button" data-sidebar-close class="inline-flex items-center justify-center rounded-xl border border-slate-700 p-2 text-slate-100 xl:hidden" aria-label="Close navigation menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
                 <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900 p-4">
                     <div class="text-sm text-slate-400">Signed in as</div>

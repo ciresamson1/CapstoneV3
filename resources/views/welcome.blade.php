@@ -9,10 +9,10 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
 
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen flex-col lg:flex-row">
 
         {{-- Left panel --}}
-        <div class="relative flex w-full flex-col justify-between bg-slate-950 px-10 py-12 text-white lg:w-[46%]">
+        <div class="relative flex w-full flex-col justify-between bg-slate-950 px-6 py-8 text-white sm:px-10 sm:py-12 lg:w-[46%]">
             {{-- Brand --}}
             <div>
                 <div class="flex items-center gap-3">
@@ -22,7 +22,7 @@
                     <span class="text-sm font-semibold tracking-wide text-slate-300">SGpro.co PCMS Portal</span>
                 </div>
 
-                <h1 class="mt-14 text-4xl font-bold leading-tight lg:text-5xl">
+                <h1 class="mt-10 text-3xl font-bold leading-tight sm:mt-14 sm:text-4xl lg:text-5xl">
                     Manage projects.<br>
                     <span class="text-brand-400">Coordinate teams.</span>
                 </h1>
@@ -65,13 +65,13 @@
         </div>
 
         {{-- Right panel --}}
-        <div class="flex flex-1 flex-col items-center justify-center px-8 py-12">
+        <div class="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
             <div class="w-full max-w-md">
                 <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Get started</p>
                 <h2 class="mt-2 text-3xl font-bold text-slate-900">Welcome back</h2>
                 <p class="mt-2 text-sm text-slate-500">Sign in to your account or create a new one.</p>
 
-                <div class="mt-8 grid grid-cols-2 gap-4">
+                <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <a href="{{ route('login') }}"
                         class="flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[#dbe2ff] transition hover:bg-brand-600">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
@@ -84,7 +84,7 @@
                     </a>
                 </div>
 
-                <div class="mt-12 grid grid-cols-3 gap-4 text-center">
+                <div class="mt-12 grid grid-cols-1 gap-4 text-center sm:grid-cols-3">
                     <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                         <p class="text-2xl font-bold text-brand-600">PM</p>
                         <p class="mt-1 text-xs text-slate-500">Project Manager</p>

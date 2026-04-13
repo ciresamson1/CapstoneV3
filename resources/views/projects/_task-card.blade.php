@@ -1,3 +1,60 @@
+{{--
+    Partial: projects/_task-card.blade.php
+    ═══════════════════════════════════════════════════════════════════════════
+
+    PURPOSE
+    ───────
+    Renders a single self-contained task card including the chat/comment
+    thread below it. Designed to be used in two ways:
+
+      1. Server-side include (Blade @include) — on initial page load, each
+         task in the project.show view includes this partial.
+
+      2. AJAX re-render — when the front-end receives a 'task.changed'
+         WebSocket event, it fetches this partial from:
+             GET /projects/{project}/tasks/{task}/card  → TaskController::taskCard()
+         and replaces the existing card's outerHTML to apply the change in
+         real time without a full page reload.
+
+    REQUIRED VARIABLE
+    ─────────────────
+    $task  \App\Models\Task  — must be eager-loaded with:
+        - assignedTo   (User)
+        - comments     (TaskComment, top-level only, with user + reactions +
+                         replies.user + replies.reactions)
+
+    ROLE-BASED VISIBILITY
+    ─────────────────────
+    admin / pm    → see checkbox, edit button, full comment controls
+    dm            → no checkbox, no edit button; can read & post comments
+    client        → no checkbox, no edit button; can read & post comments
+
+    REAL-TIME BEHAVIOUR
+    ───────────────────
+    This partial is also targeted by the JavaScript helpers in show.blade.php:
+      • fetchAndReplaceTask(taskId) — re-fetches and swaps this card's HTML
+      • applyToggleState(data)      — locally updates progress/status badge
+                                      without an extra HTTP request
+      • fetchAndInjectTask(taskId)  — used when a NEW task is created by
+                                      another user; appends a fresh card
+
+    JAVASCRIPT HOOKS (IDs used by show.blade.php inline scripts)
+    ─────────────────────────────────────────────────────────────
+      #task-wrapper-{id}       outer container element
+      #task-header-{id}        coloured header bar (changes on progress)
+      #task-title-{id}         title text (strikethrough when completed)
+      #task-checkbox-{id}      circular completion toggle button
+      #status-badge-{id}       pill badge showing Pending / In Progress / Overdue / Completed
+      #toggle-btn-{id}         button to show/hide comment section
+      #toggle-label-{id}       comment count label inside toggle button
+      #comments-section-{id}   collapsible comment thread wrapper
+      #task-comments-{id}      scrollable list of comment bubbles
+      #comment-form-{id}       the bottom compose bar form
+
+    @see App\Http\Controllers\TaskController::taskCard()
+    @see resources/views/projects/show.blade.php
+    @see App\Events\TaskChanged
+--}}
 @php
     use Carbon\Carbon;
     $today            = Carbon::today();

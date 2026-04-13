@@ -2,53 +2,27 @@
 
 @section('content')
 <div class="min-h-screen overflow-x-hidden bg-slate-100">
-    <div class="flex min-h-screen flex-col xl:flex-row">
-        <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
-            <div class="mb-10">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-white p-1.5"><img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain"></div>
-                    <div>
-                        <h1 class="text-lg font-semibold">PCMS Admin</h1>
-                        <p class="text-sm text-slate-400">Project Coordination</p>
-                    </div>
-                </div>
-                <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900 p-4">
-                    <div class="text-sm text-slate-400">Signed in as</div>
-                    <div class="mt-2 text-base font-semibold text-white">{{ auth()->user()->name }}</div>
-                    <div class="text-sm text-slate-500">{{ auth()->user()->role }}</div>
-                </div>
+    {{-- Mobile top bar (visible below xl breakpoint) --}}
+    <header class="sticky top-0 z-50 flex items-center justify-between bg-slate-950 px-4 py-3 xl:hidden">
+        <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5">
+                <img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain">
             </div>
+            <span class="text-sm font-semibold text-white">PCMS</span>
+        </div>
+        <button id="sidebarOpen" type="button" aria-label="Open menu"
+            class="inline-flex items-center justify-center rounded-2xl bg-slate-800 p-2.5 text-slate-300 transition hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </header>
 
-            <div class="space-y-4">
-                <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
-                <nav class="space-y-2">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🏠</span>
-                        Dashboard
-                    </a>
-                    <a href="{{ route('projects.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
-                        Projects
-                    </a>
-                    <a href="{{ route('admin.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
-                        Tasks
-                    </a>
-                    <a href="{{ route('admin.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
-                        Activity Log
-                    </a>
-                    <a href="{{ route('admin.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
-                        Reports
-                    </a>
-                    <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-slate-950">👥</span>
-                        Manage Users
-                    </a>
-                </nav>
-            </div>
-        </aside>
+    {{-- Backdrop overlay (mobile sidebar) --}}
+    <div id="sidebarBackdrop" class="fixed inset-0 z-30 hidden bg-black/50 xl:hidden"></div>
+
+    <div class="flex xl:min-h-screen xl:flex-row">
+        @include('partials.sidebar')
 
         <main class="flex-1 min-w-0 p-6 xl:p-8">
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

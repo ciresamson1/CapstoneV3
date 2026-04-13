@@ -1,5 +1,41 @@
 <?php
 
+/**
+ * AdminDashboardController
+ *
+ * Powers the admin dashboard at GET /admin/dashboard.
+ * Restricted to users with role = 'admin' via the constructor middleware.
+ *
+ * ── Caching ──────────────────────────────────────────────────────────────────
+ *  The full dashboard payload is cached for 1 minute under the key
+ *  'admin_dashboard_data' to reduce database load from repeated polling.
+ *  KPI cards and chart data have separate cache keys (45 s) for the
+ *  live-update AJAX endpoints (metrics, chartData).
+ *
+ * ── AJAX Endpoints ───────────────────────────────────────────────────────────
+ *  GET /admin/dashboard/metrics     → metrics()     returns kpiCards JSON
+ *  GET /admin/dashboard/chart-data  → chartData()   returns gantt + team JSON
+ *  These allow the dashboard to refresh individual widgets without a
+ *  full page reload.
+ *
+ * ── Widgets ──────────────────────────────────────────────────────────────────
+ *  buildKpiCards()        Six KPI tiles (same structure as DashboardController)
+ *  buildAlerts()          High-priority task alerts across all projects
+ *  buildProjectHealth()   Per-project on-track/at-risk/overdue summary
+ *  buildGanttData()       Timeline data for all active tasks
+ *  buildTeamPerformance() DM-level task completion breakdown
+ *  buildClientActivity()  Recent comments by client users
+ *
+ * ── Blocked Tasks Definition ─────────────────────────────────────────────────
+ *  A task is "blocked" when start_date <= today AND progress < 30%.
+ *  This applies regardless of whether the task is assigned to a DM.
+ *
+ * @see \App\Http\Controllers\DashboardController
+ * @see \App\Models\Task
+ * @see \App\Models\Project
+ * @see \App\Models\User
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\Project;

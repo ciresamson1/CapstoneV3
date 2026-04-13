@@ -1,5 +1,48 @@
 <?php
 
+/**
+ * TaskCommentController
+ *
+ * Manages the threaded comment system for Tasks.
+ *
+ * ─── Methods & Routes ──────────────────────────────────────────────────
+ *  store()    POST /tasks/{task}/comments
+ *             - Saves comment (message and/or link_url, optional parent_id)
+ *             - Broadcasts TaskCommentCreated on channel 'project.{id}'
+ *             - Sends email to all project stakeholders (except commenter)
+ *             - Logs to ActivityLog
+ *             - Returns JSON when AJAX, redirect otherwise
+ *
+ *  poll()     GET  /projects/{project}/comments/poll?after={ISO timestamp}
+ *             - Returns all comments newer than the given timestamp as JSON
+ *             - Used as a WebSocket fallback for slower connections
+ *
+ *  download() GET  /task-comments/{comment}/download
+ *             - Serves legacy attachment files from storage
+ *
+ * ─── AJAX Detection ─────────────────────────────────────────────────
+ *  store() checks both $request->wantsJson() AND the X-Requested-With
+ *  header so AJAX fetch() calls receive JSON without needing full page reload.
+ *
+ * ─── Link Sanitisation ─────────────────────────────────────────────────
+ *  Bare domains (e.g. 'sgpro.co') are automatically prefixed with 'https://'
+ *  before being stored, so clickable link cards render correctly.
+ *
+ * ─── Email Notification Recipients ───────────────────────────────────
+ *  When a comment is posted, email is sent to:
+ *    - Project creator (PM)
+ *    - Task assignee (DM)
+ *    - Project client
+ *    - All previous thread participants
+ *    - All admin users
+ *  The commenter themselves is always excluded.
+ *
+ * @see \App\Models\TaskComment
+ * @see \App\Events\TaskCommentCreated
+ * @see \App\Mail\TaskCommentMail
+ * @see \App\Models\ActivityLog
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\Task;
@@ -17,6 +60,19 @@ use Illuminate\Support\Str;
 
 class TaskCommentController extends Controller
 {
+    /**
+     * Save a new comment (or reply) on a task.
+     *
+     * Accepts: message (text), link_url, parent_id (for replies).
+     * At least one of message or link_url must be non-empty.
+     *
+     * After saving:
+     *  1. Broadcasts TaskCommentCreated to all other open tabs
+     *  2. Emails all project stakeholders (non-fatal)
+     *  3. Writes an ActivityLog entry
+     *
+     * Returns JSON when AJAX, or redirect when traditional form submit.
+     */
     public function store(Request $request, Task $task)
     {
         $validated = $request->validate([
@@ -140,6 +196,13 @@ class TaskCommentController extends Controller
         return back();
     }
 
+    /**
+     * Poll for comments newer than a given timestamp.
+     * Used as a long-polling fallback when WebSocket is not available.
+     *
+     * Query param: after (ISO 8601 datetime string)
+     * Returns: array of serialized comments ordered oldest-first.
+     */
     public function poll(Request $request, Project $project)
     {
         $after = $request->query('after');
@@ -160,6 +223,11 @@ class TaskCommentController extends Controller
         }));
     }
 
+    /**
+     * Shared comment serializer used by store() and poll().
+     * Returns a consistent array shape that the front-end JavaScript
+     * uses to render comment bubbles dynamically.
+     */
     protected function serializeComment(TaskComment $comment): array
     {
         $comment->loadMissing('user', 'task');
@@ -179,6 +247,10 @@ class TaskCommentController extends Controller
         ];
     }
 
+    /**
+     * Serve a legacy attachment file stored in public storage.
+     * Returns 404 if the comment has no attachment.
+     */
     public function download($id)
     {
         $comment = TaskComment::findOrFail($id);

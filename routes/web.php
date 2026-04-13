@@ -1,5 +1,41 @@
 <?php
 
+/**
+ * Web Routes
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │  All HTTP routes are defined here and loaded by                         │
+ * │  bootstrap/app.php  →  RouteServiceProvider                             │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * ── Role Overview ────────────────────────────────────────────────────────────
+ *  admin   Full access; manages users, projects, tasks, activity log, reports.
+ *  pm      Project Manager; owns projects and their tasks; sees PM dashboard.
+ *  dm      Digital Marketer; works on assigned tasks; limited write access.
+ *  client  Read-only; views their own project, tasks, and can post comments.
+ *
+ * ── Route Guard ──────────────────────────────────────────────────────────────
+ *  All routes below the auth middleware require a logged-in user.
+ *  Additional role:* middleware (RoleMiddleware) further restricts access.
+ *
+ * ── Dashboard Redirect ───────────────────────────────────────────────────────
+ *  GET /dashboard  →  DashboardController::redirect()
+ *  Redirects to the correct role-specific dashboard URL automatically.
+ *
+ * ── Real-time Task Card ───────────────────────────────────────────────────────
+ *  GET /projects/{project}/tasks/{task}/card  (tasks.card)
+ *  Returns rendered HTML for a single task card; fetched by the WebSocket
+ *  listener in show.blade.php after a TaskChanged event is received.
+ *
+ * ── Broadcasting Channel ─────────────────────────────────────────────────────
+ *  Channel authorisation is handled in routes/channels.php.
+ *  Real-time pusher-compatible events run through Laravel Reverb on port 6001.
+ *
+ * @see routes/channels.php
+ * @see app/Http/Controllers/DashboardController.php
+ * @see app/Http/Controllers/TaskController.php
+ * @see app/Http/Middleware/RoleMiddleware.php
+ */
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminDashboardController;

@@ -2,61 +2,29 @@
 
 @section('content')
 <div class="min-h-screen overflow-x-hidden bg-slate-100">
-    <div class="flex min-h-screen flex-col xl:flex-row">
+    {{-- Mobile top bar (visible below xl breakpoint) --}}
+    <header class="sticky top-0 z-50 flex items-center justify-between bg-slate-950 px-4 py-3 xl:hidden">
+        <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white p-1.5">
+                <img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain">
+            </div>
+            <span class="text-sm font-semibold text-white">PCMS</span>
+        </div>
+        <button id="sidebarOpen" type="button" aria-label="Open menu"
+            class="inline-flex items-center justify-center rounded-2xl bg-slate-800 p-2.5 text-slate-300 transition hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </header>
+
+    {{-- Backdrop overlay (mobile sidebar) --}}
+    <div id="sidebarBackdrop" class="fixed inset-0 z-30 hidden bg-black/50 xl:hidden"></div>
+
+    <div class="flex xl:min-h-screen xl:flex-row">
 
         {{-- Sidebar --}}
-        <aside class="w-full xl:w-80 shrink-0 bg-slate-950 text-slate-100 p-6">
-            <div class="mb-10">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-3xl bg-white p-1.5"><img src="/images/sgpro-logo.webp" alt="SGpro Logo" class="h-full w-full object-contain"></div>
-                    <div>
-                        <h1 class="text-lg font-semibold">PCMS Portal</h1>
-                        <p class="text-sm text-slate-400">Project Coordination</p>
-                    </div>
-                </div>
-                <div class="mt-6 rounded-3xl border border-slate-800 bg-slate-900 p-4">
-                    <div class="text-sm text-slate-400">Signed in as</div>
-                    <div class="mt-2 text-base font-semibold text-white">{{ auth()->user()->name }}</div>
-                    <div class="text-sm text-slate-500">{{ auth()->user()->role }}</div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Navigation</div>
-                <nav class="space-y-2">
-                    <a href="{{ route('pm.dashboard') }}" class="flex items-center gap-3 rounded-3xl bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500 text-white">🏠</span>
-                        Dashboard
-                    </a>
-                    <a href="{{ route('pm.projects') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📁</span>
-                        Projects
-                    </a>
-                    <a href="{{ route('pm.tasks.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">✅</span>
-                        Tasks
-                    </a>
-                    <a href="{{ route('pm.activity-log.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📋</span>
-                        Activity Log
-                    </a>
-                    <a href="{{ route('pm.report.index') }}" class="flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">📊</span>
-                        Reports
-                    </a>
-                </nav>
-            </div>
-
-            <div class="mt-10 border-t border-slate-800 pt-6">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="flex w-full items-center gap-3 rounded-3xl px-4 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800 hover:text-white">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800 text-slate-100">🚪</span>
-                        Logout
-                    </button>
-                </form>
-            </div>
-        </aside>
+        @include('partials.sidebar')
 
         {{-- Main Content --}}
         <main class="flex-1 min-w-0 p-6 xl:p-8">
@@ -189,7 +157,7 @@
                                     <tr class="hover:bg-slate-50">
                                         <td class="py-5 pr-8 font-medium text-slate-900">{{ $project['name'] }}</td>
                                         <td class="py-5 pr-8">
-                                            <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
+                                            <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-100 progress-bar-inner">
                                                 @if($project['progress'] > 0)
                                                     <div class="absolute inset-y-0 left-0 rounded-full bg-violet-500 transition-all" style="width: {{ $project['progress'] }}%"></div>
                                                 @endif
@@ -379,6 +347,15 @@
                     <option value="on_hold" {{ old('status') === 'on_hold' ? 'selected' : '' }}>On Hold</option>
                     <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                 </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Assign Client <span class="font-normal text-slate-400">(optional)</span></label>
+                <div class="relative">
+                    <input type="text" id="pmCreateClientSearch" autocomplete="off" placeholder="e.g. eric | eric@sgpro.co"
+                        class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                    <input type="hidden" name="client_id" id="pmCreateClientId">
+                    <ul id="pmCreateClientDropdown" class="absolute z-50 mt-1 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg"></ul>
+                </div>
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Project</button>
@@ -626,6 +603,51 @@
         modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
         @if($errors->any()) openModal(); @endif
+
+        // Client autocomplete for PM create-project modal
+        (function () {
+            var searchInput = document.getElementById('pmCreateClientSearch');
+            var hiddenInput = document.getElementById('pmCreateClientId');
+            var dropdown    = document.getElementById('pmCreateClientDropdown');
+            var searchUrl   = '{{ route("projects.clients.search") }}';
+            var timer;
+
+            searchInput.addEventListener('input', function () {
+                hiddenInput.value = '';
+                clearTimeout(timer);
+                var q = this.value.trim();
+                if (!q) { dropdown.classList.add('hidden'); dropdown.innerHTML = ''; return; }
+                timer = setTimeout(function () {
+                    fetch(searchUrl + '?q=' + encodeURIComponent(q), {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (clients) {
+                        dropdown.innerHTML = '';
+                        if (!clients.length) {
+                            dropdown.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400">No clients found</li>';
+                        } else {
+                            clients.forEach(function (c) {
+                                var li = document.createElement('li');
+                                li.className = 'cursor-pointer px-4 py-3 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-700';
+                                li.textContent = c.name + ' | ' + c.email;
+                                li.addEventListener('mousedown', function (e) {
+                                    e.preventDefault();
+                                    searchInput.value = c.name + ' | ' + c.email;
+                                    hiddenInput.value = c.id;
+                                    dropdown.classList.add('hidden');
+                                });
+                                dropdown.appendChild(li);
+                            });
+                        }
+                        dropdown.classList.remove('hidden');
+                    });
+                }, 250);
+            });
+
+            searchInput.addEventListener('blur',  function () { setTimeout(function () { dropdown.classList.add('hidden'); }, 150); });
+            searchInput.addEventListener('focus', function () { if (dropdown.children.length) dropdown.classList.remove('hidden'); });
+        })();
     });
 </script>
 

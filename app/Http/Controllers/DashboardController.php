@@ -1,5 +1,58 @@
 <?php
 
+/**
+ * DashboardController
+ *
+ * Serves role-specific dashboard pages for PM, DM, and Client users.
+ * Admin dashboard is handled separately by AdminDashboardController.
+ *
+ * ── Methods ──────────────────────────────────────────────────────────────────
+ *  redirect()    GET /dashboard
+ *    Reads auth()->user()->role and redirects to the correct dashboard URL.
+ *    This is the single entry point for all post-login redirects.
+ *
+ *  index()       GET /pm/dashboard   (role: pm)
+ *    Builds KPI cards, alerts, project health, Gantt data, team performance,
+ *    and client activity scoped to projects created by the current PM.
+ *
+ *  dmIndex()     GET /dm/dashboard   (role: dm)
+ *    Same widget set but scoped to projects that contain tasks assigned
+ *    to the current DM user.
+ *
+ *  clientIndex() GET /client/dashboard   (role: client)
+ *    Lightweight view showing only projects where client_id = current user.
+ *
+ * ── Dashboard Widgets ────────────────────────────────────────────────────────
+ *  Each dashboard composes several "widget" arrays via private builder methods:
+ *
+ *  buildKpiCards / buildDmKpiCards
+ *    Six coloured KPI tiles: overdue tasks, near-deadline tasks, active
+ *    projects, completion %, tasks assigned, tasks completed.
+ *
+ *  buildAlerts / buildDmAlerts
+ *    Prioritised list of tasks needing attention (overdue or stalled).
+ *
+ *  buildProjectHealth
+ *    Per-project progress summary with on-track / at-risk / overdue flags.
+ *
+ *  buildGanttData
+ *    Task date ranges formatted for the timeline (Gantt) chart.
+ *
+ *  buildTeamPerformance
+ *    Per-DM completion rate and assigned task counts.
+ *
+ *  buildClientActivity
+ *    Recent comment activity from client users on the project.
+ *
+ * ── Blocked Tasks Definition ─────────────────────────────────────────────────
+ *  A "blocked" task is one that has already started (start_date <= today)
+ *  but has less than 30 % progress. Both assigned and unassigned tasks count.
+ *
+ * @see \App\Http\Controllers\AdminDashboardController
+ * @see \App\Models\Task
+ * @see \App\Models\Project
+ */
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -182,7 +235,7 @@ class DashboardController extends Controller
                 'color'    => 'red',
                 'headline' => 'My overdue tasks by project',
                 'details'  => $overdueGrouped->map(fn ($g) => $g['project'] . ' (' . $g['count'] . ')')->take(4)->implode(', ') ?: 'No overdue tasks',
-                'items'    => $overdueItems,
+                'items'    => $overdueGrouped,
             ],
             [
                 'label'    => 'Medium',

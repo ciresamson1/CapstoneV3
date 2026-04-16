@@ -259,8 +259,10 @@
                             <p id="ganttProjectTitle" class="mt-3 text-lg font-semibold text-slate-900">All Projects</p>
                             <p id="ganttProjectDescription" class="mt-2 text-sm text-slate-500">Timeline across all projects.</p>
                         </div>
-                        <div class="h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
-                            <canvas id="ganttChart" class="h-full w-full block" style="min-height:420px;"></canvas>
+                        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden">
+                            <div id="ganttContainer" class="h-[420px] min-h-[320px] overflow-hidden">
+                                <canvas id="ganttChart" class="h-full w-full block"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -614,6 +616,36 @@
     }
 
     createTeamChart();
+
+    function handleDashboardUpdate() {
+        if (window.dashboardUpdateScheduled) return;
+        window.dashboardUpdateScheduled = true;
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+
+    function registerDashboardUpdateListener() {
+        const attach = () => {
+            if (!window.Echo) return false;
+            window.Echo.channel('dashboard').listen('.dashboard.updated', handleDashboardUpdate);
+            return true;
+        };
+
+        if (!attach()) {
+            const intervalId = setInterval(() => {
+                if (attach()) {
+                    clearInterval(intervalId);
+                }
+            }, 250);
+            setTimeout(() => clearInterval(intervalId), 5000);
+        }
+    }
+
+    registerDashboardUpdateListener();
+
+    // Fallback refresh if event delivery fails
+    setInterval(() => window.location.reload(), 15000);
 
     // Refresh KPI cards every 45 seconds
     setInterval(refreshKpiCards, 45000);

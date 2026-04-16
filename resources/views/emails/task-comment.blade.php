@@ -50,6 +50,26 @@
                 Or copy this link: <a href="{{ $taskUrl }}" style="color:#4e74fb;word-break:break-all;">{{ $taskUrl }}</a>
             </p>
 
+            @if(isset($recentComments) && $recentComments->count())
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-bottom:28px;">
+                    <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#0f172a;">Latest conversation preview</p>
+                    @foreach($recentComments as $threadComment)
+                        <div style="margin-bottom:16px;padding:16px;border-radius:14px;background:#ffffff;border:1px solid #e2e8f0;">
+                            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+                                <span style="font-size:13px;font-weight:700;color:#0f172a;">{{ $threadComment->user?->name ?? 'Someone' }}</span>
+                                <span style="font-size:12px;color:#94a3b8;">{{ $threadComment->created_at->diffForHumans() }}</span>
+                            </div>
+                            @if($threadComment->message)
+                                <p style="margin:10px 0 0;font-size:14px;color:#334155;line-height:1.6;">{{ $threadComment->message }}</p>
+                            @endif
+                            @if($threadComment->link_url)
+                                <p style="margin:10px 0 0;font-size:13px;color:#4e74fb;word-break:break-all;">🔗 <a href="{{ $threadComment->link_url }}" style="color:#4e74fb;">{{ $threadComment->link_url }}</a></p>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 20px;">
             <p style="margin:0;font-size:12px;color:#94a3b8;">You are receiving this because you are a member of this project. Please do not reply to this email.</p>
         </div>

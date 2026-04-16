@@ -134,7 +134,10 @@
                             </div>
                             <div class="rounded-2xl px-4 py-2.5 text-sm {{ $isMe ? 'rounded-tr-sm bg-emerald-600 text-white' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800' }}">
                                 @if($comment->message)
-                                    <p class="whitespace-pre-line">{{ $comment->message }}</p>
+                                    @php
+                                        $commentMessage = preg_replace('/(@[A-Za-z0-9_.-]+)/', '<span class="text-sky-600 font-semibold">$1</span>', e($comment->message));
+                                    @endphp
+                                    <p class="whitespace-pre-line">{!! $commentMessage !!}</p>
                                 @endif
                                 @if($comment->link_url)
                                     <a href="{{ $comment->link_url }}" target="_blank" rel="noopener noreferrer"
@@ -192,7 +195,10 @@
                                             </div>
                                             <div class="rounded-2xl px-3.5 py-2.5 text-sm {{ $replyIsMe ? 'rounded-tr-sm bg-emerald-100 text-emerald-950' : 'rounded-tl-sm border border-slate-200 bg-white text-slate-800' }}">
                                                 @if($reply->message)
-                                                    <p class="whitespace-pre-line">{{ $reply->message }}</p>
+                                                    @php
+                                                        $replyMessage = preg_replace('/(@[A-Za-z0-9_.-]+)/', '<span class="text-sky-600 font-semibold">$1</span>', e($reply->message));
+                                                    @endphp
+                                                    <p class="whitespace-pre-line">{!! $replyMessage !!}</p>
                                                 @endif
                                                 @if($reply->link_url)
                                                     <a href="{{ $reply->link_url }}" target="_blank" rel="noopener noreferrer"
@@ -242,8 +248,11 @@
                                 @csrf
                                 <input type="hidden" name="parent_id" value="{{ $comment->id }}">
                                 <div class="space-y-2">
-                                    <input type="text" name="message" placeholder="Write a reply…"
-                                        class="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                    <div class="relative comment-mention-wrapper">
+                                        <input type="text" name="message" placeholder="Write a reply…"
+                                            class="mention-input w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                        <ul class="mention-dropdown absolute left-0 right-0 z-50 mt-1 hidden max-h-48 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg"></ul>
+                                    </div>
                                     <div class="flex items-center gap-2">
                                         <input type="text" name="link_url" placeholder="Paste a link (optional)"
                                             class="flex-1 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
@@ -271,8 +280,11 @@
             class="comment-form-ajax border-t border-slate-100 px-4 py-3">
             @csrf
             <div class="space-y-2">
-                <input type="text" name="message" placeholder="Write a message…"
-                    class="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                <div class="relative comment-mention-wrapper">
+                    <input type="text" name="message" placeholder="Write a message…"
+                        class="mention-input w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                    <ul class="mention-dropdown absolute left-0 right-0 z-50 mt-1 hidden max-h-48 overflow-auto rounded-2xl border border-slate-200 bg-white shadow-lg"></ul>
+                </div>
                 <div class="flex items-center gap-2">
                     <input type="text" name="link_url" placeholder="Paste a link (optional)"
                         class="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">

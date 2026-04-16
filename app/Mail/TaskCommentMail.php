@@ -13,11 +13,19 @@ class TaskCommentMail extends Mailable
 
     public TaskComment $comment;
     public string $taskUrl;
+    public $recentComments;
 
     public function __construct(TaskComment $comment, string $taskUrl)
     {
         $this->comment = $comment;
         $this->taskUrl = $taskUrl;
+        $this->recentComments = TaskComment::where('task_id', $comment->task_id)
+            ->with('user')
+            ->latest('created_at')
+            ->take(3)
+            ->get()
+            ->reverse()
+            ->values();
     }
 
     public function build()

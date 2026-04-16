@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\DashboardUpdated;
 use App\Models\ActivityLog;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class ProjectController extends Controller
 {
@@ -68,7 +70,8 @@ class ProjectController extends Controller
 
     public function create()
     {
-        return view('projects.create');
+        $clients = User::where('role', 'client')->orderBy('name')->get();
+        return view('projects.create', compact('clients'));
     }
 
     public function store()
@@ -91,6 +94,14 @@ class ProjectController extends Controller
         ]);
 
         ActivityLog::record('created_project', 'Created project "' . $project->name . '"', $project);
+
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
+        try {
+            broadcast(new DashboardUpdated('project', 'created', $project->id));
+        } catch (\Throwable $e) {}
 
         $redirect = auth()->user()->role === 'pm' ? 'pm.projects' : 'projects.index';
         return redirect()->route($redirect)->with('status', 'Project created successfully.');
@@ -123,7 +134,19 @@ class ProjectController extends Controller
 
         $users = User::orderBy('name')->get();
 
-        return view('projects.show', compact('project', 'users'));
+        $projectUserIds = collect([$project->created_by, $project->client_id])
+            ->filter()
+            ->merge($project->tasks->pluck('assigned_to'))
+            ->merge($project->tasks->flatMap(fn ($task) => $task->comments->pluck('user_id')))
+            ->merge($project->tasks->flatMap(fn ($task) => $task->comments->flatMap(fn ($comment) => $comment->replies->pluck('user_id'))))
+            ->unique()
+            ->filter();
+
+        $projectUsers = User::whereIn('id', $projectUserIds)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        return view('projects.show', compact('project', 'users', 'projectUsers'));
     }
 
     public function edit($id)
@@ -153,6 +176,14 @@ class ProjectController extends Controller
             'client_id'   => request('client_id') ?: null,
         ]);
 
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
+        try {
+            broadcast(new DashboardUpdated('project', 'updated', $project->id));
+        } catch (\Throwable $e) {}
+
         $redirect = auth()->user()->role === 'pm' ? 'pm.projects' : 'projects.index';
         return redirect()->route($redirect)->with('status', 'Project updated successfully.');
     }
@@ -160,7 +191,16 @@ class ProjectController extends Controller
     public function destroy($id)
     {
         $project = Project::findOrFail($id);
+        $projectId = $project->id;
         $project->delete();
+
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
+        try {
+            broadcast(new DashboardUpdated('project', 'deleted', $projectId));
+        } catch (\Throwable $e) {}
 
         $redirect = auth()->user()->role === 'pm' ? 'pm.projects' : 'projects.index';
         return redirect()->route($redirect)->with('status', 'Project deleted.');

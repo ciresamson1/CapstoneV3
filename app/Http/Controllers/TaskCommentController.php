@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\DashboardUpdated;
 use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\Project;
 use App\Models\User;
 use App\Mail\TaskCommentMail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use App\Events\TaskCommentCreated;
 use App\Models\ActivityLog;
@@ -74,6 +76,16 @@ class TaskCommentController extends Controller
             broadcast(new TaskCommentCreated($comment))->toOthers();
         } catch (\Throwable $e) {
             // Broadcast server unavailable — comment still saved
+        }
+
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
+        try {
+            broadcast(new DashboardUpdated('comment', 'created', $comment->id));
+        } catch (\Throwable $e) {
+            // Broadcast server unavailable — continue processing
         }
 
         // Send email notification to project team (exclude the commenter)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\DashboardUpdated;
 use App\Events\TaskChanged;
 use App\Models\Task;
 use App\Models\ActivityLog;
@@ -9,6 +10,7 @@ use App\Models\ProgressLog;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class TaskController extends Controller
 {
@@ -98,8 +100,16 @@ class TaskController extends Controller
         $project = Project::find($projectId);
         ActivityLog::record('created_task', 'Created task "' . $request->title . '" in project "' . ($project?->name ?? 'Unknown') . '"', $task);
 
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
         try {
             broadcast(new TaskChanged($task, 'created'))->toOthers();
+        } catch (\Throwable $e) {}
+
+        try {
+            broadcast(new DashboardUpdated('task', 'created', $task->id));
         } catch (\Throwable $e) {}
 
         if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
@@ -117,6 +127,14 @@ class TaskController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
         ]);
+
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
+        try {
+            broadcast(new DashboardUpdated('task', 'dates_updated', $task->id))->toOthers();
+        } catch (\Throwable $e) {}
 
         return response()->json(['status' => 'updated']);
     }
@@ -141,8 +159,16 @@ class TaskController extends Controller
         $label = $task->progress == 100 ? 'completed' : 'reopened';
         ActivityLog::record('updated_task', 'Marked task "' . $task->title . '" as ' . $label, $task);
 
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
         try {
             broadcast(new TaskChanged($task, 'toggled'))->toOthers();
+        } catch (\Throwable $e) {}
+
+        try {
+            broadcast(new DashboardUpdated('task', 'toggled', $task->id));
         } catch (\Throwable $e) {}
 
         return response()->json(['status' => 'ok', 'progress' => $task->progress]);
@@ -184,8 +210,16 @@ class TaskController extends Controller
 
         ActivityLog::record('updated_task', 'Updated task "' . $task->title . '"', $task);
 
+        Cache::forget('admin_dashboard_data');
+        Cache::forget('admin_dashboard_kpi_cards');
+        Cache::forget('admin_dashboard_chart_data');
+
         try {
             broadcast(new TaskChanged($task->fresh('assignedTo'), 'updated'))->toOthers();
+        } catch (\Throwable $e) {}
+
+        try {
+            broadcast(new DashboardUpdated('task', 'updated', $task->id));
         } catch (\Throwable $e) {}
 
         if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {

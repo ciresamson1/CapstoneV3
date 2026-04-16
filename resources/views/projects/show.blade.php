@@ -167,7 +167,9 @@
                         <p class="text-sm text-slate-500">Gantt view of all tasks.</p>
                     </div>
                 </div>
-                <div id="gantt" class="overflow-x-auto"></div>
+                <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden">
+                    <div id="gantt" class="min-h-[260px] overflow-x-auto"></div>
+                </div>
             </div>
 
             {{-- Task checklist --}}
@@ -748,6 +750,118 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     document.addEventListener('submit', (e) => {
         if (e.target.matches('.comment-form-ajax')) commentSubmitHandler(e);
+    });
+
+    const projectMentionUsers = @json($projectUsers->map(fn($user) => [
+        'name'  => $user->name,
+        'label' => $user->name . ' | ' . $user->email,
+    ]));
+
+    function findMentionQuery(text, pos) {
+        const slice = text.slice(0, pos);
+        const match = /(?:^|\s)@([a-zA-Z0-9_.-]*)$/.exec(slice);
+        return match ? { query: match[1], prefix: slice.slice(0, match.index + (match[0].startsWith(' ') ? 1 : 0)) } : null;
+    }
+
+    function hideMentionDropdown(dropdown) {
+        if (!dropdown) return;
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+    }
+
+    function renderMentionDropdown(input) {
+        const wrapper = input.closest('.comment-mention-wrapper');
+        if (!wrapper) return;
+        const dropdown = wrapper.querySelector('.mention-dropdown');
+        const pos = input.selectionStart || 0;
+        const mention = findMentionQuery(input.value, pos);
+
+        if (!mention) {
+            hideMentionDropdown(dropdown);
+            return;
+        }
+
+        const matches = projectMentionUsers.filter(user =>
+            user.name.toLowerCase().includes(mention.query.toLowerCase())
+        ).slice(0, 8);
+
+        if (!matches.length) {
+            dropdown.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400">No matching user</li>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        dropdown.innerHTML = matches.map((user, index) => `
+            <li class="mention-item cursor-pointer px-4 py-3 text-sm text-slate-700 hover:bg-slate-100" data-index="${index}" data-name="${user.name}">
+                ${user.label}
+            </li>
+        `).join('');
+        dropdown.classList.remove('hidden');
+    }
+
+    function chooseMention(input, dropdown, username) {
+        const pos = input.selectionStart || 0;
+        const mention = findMentionQuery(input.value, pos);
+        if (!mention) return;
+
+        input.value = mention.prefix + '@' + username + ' ' + input.value.slice(pos);
+        input.focus();
+        const caret = mention.prefix.length + username.length + 2;
+        input.setSelectionRange(caret, caret);
+        hideMentionDropdown(dropdown);
+    }
+
+    document.addEventListener('input', (e) => {
+        if (!e.target.matches('.mention-input')) return;
+        renderMentionDropdown(e.target);
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (!e.target.matches('.mention-input')) return;
+        const wrapper = e.target.closest('.comment-mention-wrapper');
+        const dropdown = wrapper?.querySelector('.mention-dropdown');
+        if (!dropdown || dropdown.classList.contains('hidden')) return;
+
+        const items = Array.from(dropdown.querySelectorAll('li[data-name]'));
+        if (!items.length) return;
+        const current = dropdown.querySelector('.mention-selected');
+        let currentIndex = current ? Number(current.dataset.index) : -1;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentIndex = currentIndex + 1 < items.length ? currentIndex + 1 : 0;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : items.length - 1;
+        } else if (e.key === 'Enter') {
+            if (currentIndex >= 0) {
+                e.preventDefault();
+                chooseMention(e.target, dropdown, items[currentIndex].dataset.name);
+            }
+            return;
+        } else {
+            return;
+        }
+
+        items.forEach((item, index) => {
+            item.classList.toggle('mention-selected', index === currentIndex);
+            item.classList.toggle('bg-slate-100', index === currentIndex);
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('.mention-item')) {
+            const input = e.target.closest('.comment-mention-wrapper')?.querySelector('.mention-input');
+            const dropdown = e.target.closest('.mention-dropdown');
+            if (input && dropdown) {
+                chooseMention(input, dropdown, e.target.dataset.name);
+            }
+            return;
+        }
+
+        if (!e.target.closest('.comment-mention-wrapper')) {
+            document.querySelectorAll('.mention-dropdown').forEach(hideMentionDropdown);
+        }
     });
 
     // ── Create Task AJAX ──────────────────────────────────────────────────

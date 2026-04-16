@@ -256,8 +256,10 @@
                             <p id="ganttProjectTitle" class="mt-3 text-lg font-semibold text-slate-900">All Projects</p>
                             <p id="ganttProjectDescription" class="mt-2 text-sm text-slate-500">Timeline across all projects.</p>
                         </div>
-                        <div class="h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
-                            <canvas id="ganttChart" class="h-full w-full block" style="min-height:420px;"></canvas>
+                        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden">
+                            <div id="ganttContainer" class="h-[420px] min-h-[320px] overflow-hidden">
+                                <canvas id="ganttChart" class="h-full w-full block"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -379,6 +381,15 @@
                     <option value="on_hold" {{ old('status') === 'on_hold' ? 'selected' : '' }}>On Hold</option>
                     <option value="completed" {{ old('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                 </select>
+            </div>
+            <div class="sm:col-span-2" id="createClientWrapper">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">Assign Client <span class="font-normal text-slate-400">(optional)</span></label>
+                <div class="relative">
+                    <input type="text" id="createClientSearch" autocomplete="off" placeholder="e.g. eric | eric@sgpro.co"
+                        class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100">
+                    <input type="hidden" name="client_id" id="createClientId">
+                    <ul id="createClientDropdown" class="absolute z-50 mt-1 hidden w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg"></ul>
+                </div>
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="w-full rounded-3xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400">Create Project</button>
@@ -615,6 +626,30 @@
 
     createTeamChart();
 
+    function registerDashboardReloadListener() {
+        const attach = () => {
+            if (!window.Echo) return false;
+            window.Echo.channel('dashboard').listen('.dashboard.updated', () => {
+                window.location.reload();
+            });
+            return true;
+        };
+
+        if (!attach()) {
+            const intervalId = setInterval(() => {
+                if (attach()) {
+                    clearInterval(intervalId);
+                }
+            }, 250);
+            setTimeout(() => clearInterval(intervalId), 5000);
+        }
+    }
+
+    registerDashboardReloadListener();
+
+    // Fallback refresh if event delivery fails
+    setInterval(() => window.location.reload(), 15000);
+
     // Create Project Modal
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById('createProjectModal');
@@ -624,6 +659,56 @@
         document.getElementById('openCreateProjectModal').addEventListener('click', openModal);
         document.getElementById('closeCreateProjectModal').addEventListener('click', closeModal);
         modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+        const clientSearchInput = document.getElementById('createClientSearch');
+        const clientHiddenInput = document.getElementById('createClientId');
+        const clientDropdown    = document.getElementById('createClientDropdown');
+
+        if (clientSearchInput && clientHiddenInput && clientDropdown) {
+            clientSearchInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                clientHiddenInput.value = '';
+
+                if (!query) {
+                    clientDropdown.classList.add('hidden');
+                    clientDropdown.innerHTML = '';
+                    return;
+                }
+
+                fetch('{{ route("projects.clients.search") }}?q=' + encodeURIComponent(query))
+                    .then(response => response.json())
+                    .then(clients => {
+                        if (!clients.length) {
+                            clientDropdown.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400">No clients found</li>';
+                            clientDropdown.classList.remove('hidden');
+                            return;
+                        }
+
+                        clientDropdown.innerHTML = clients.map(client =>
+                            `<li class="cursor-pointer px-4 py-3 text-sm text-slate-900 hover:bg-slate-50" data-id="${client.id}" data-name="${client.name}" data-email="${client.email}">${client.name} | ${client.email}</li>`
+                        ).join('');
+                        clientDropdown.classList.remove('hidden');
+
+                        clientDropdown.querySelectorAll('li[data-id]').forEach(item => {
+                            item.addEventListener('click', function () {
+                                clientHiddenInput.value = this.dataset.id;
+                                clientSearchInput.value = `${this.dataset.name} | ${this.dataset.email}`;
+                                clientDropdown.classList.add('hidden');
+                            });
+                        });
+                    })
+                    .catch(() => {
+                        clientDropdown.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400">Unable to load clients.</li>';
+                        clientDropdown.classList.remove('hidden');
+                    });
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('#createClientWrapper')) {
+                    clientDropdown.classList.add('hidden');
+                }
+            });
+        }
 
         @if($errors->any()) openModal(); @endif
     });

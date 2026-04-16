@@ -130,8 +130,7 @@
                                 <th class="pb-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">Task <button onclick="sortTable('tasksTable',0,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',0,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
                                 <th class="pb-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">Project <button onclick="sortTable('tasksTable',1,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',1,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
                                 <th class="pb-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">Status <button onclick="sortTable('tasksTable',2,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',2,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
-                                <th class="pb-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">Progress <button onclick="sortTable('tasksTable',3,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',3,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
-                                <th class="pb-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">Due date <button onclick="sortTable('tasksTable',4,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',4,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
+                                <th class="pb-4 pr-6 font-semibold text-slate-900 whitespace-nowrap">Due date <button onclick="sortTable('tasksTable',3,'asc')" class="text-[9px] text-slate-300 hover:text-brand-500">▲</button><button onclick="sortTable('tasksTable',3,'desc')" class="text-[9px] text-slate-300 hover:text-brand-500">▼</button></th>
                                 <th class="pb-4 font-semibold text-slate-900">Actions</th>
                             </tr>
                         </thead>
@@ -164,14 +163,6 @@
                                             <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Pending</span>
                                         @endif
                                     </td>
-                                    <td class="py-4 pr-6">
-                                        <div class="flex items-center gap-2">
-                                            <div class="relative h-3 w-24 overflow-hidden rounded-full bg-slate-200">
-                                                <div class="absolute inset-y-0 left-0 rounded-full bg-violet-500" style="width: {{ $task->progress }}%"></div>
-                                            </div>
-                                            <span class="text-xs text-slate-600">{{ $task->progress }}%</span>
-                                        </div>
-                                    </td>
                                     <td class="py-4 pr-6 text-slate-700">
                                         {{ $task->end_date ? \Illuminate\Support\Carbon::parse($task->end_date)->format('M d, Y') : 'TBD' }}
                                     </td>
@@ -183,7 +174,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="py-8 text-center text-sm text-slate-500">No tasks assigned to you yet.</td>
+                                    <td colspan="5" class="py-8 text-center text-sm text-slate-500">No tasks assigned to you yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>

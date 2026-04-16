@@ -224,8 +224,10 @@
                     <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                         <p id="ganttProjectTitle" class="text-lg font-semibold text-slate-900">All Projects</p>
                         <p id="ganttProjectDescription" class="mt-1 text-sm text-slate-500">Timeline across all projects.</p>
-                        <div class="mt-4 h-[420px] min-h-[420px] overflow-hidden rounded-3xl bg-white">
-                            <canvas id="ganttChart" class="h-full w-full block" style="min-height:420px;"></canvas>
+                        <div class="mt-4 rounded-3xl border border-slate-200 bg-white overflow-hidden">
+                            <div id="ganttContainer" class="h-[420px] min-h-[320px] overflow-hidden">
+                                <canvas id="ganttChart" class="h-full w-full block"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -409,6 +411,30 @@
             filterGantt();
         }
     }
+
+    function registerDashboardReloadListener() {
+        const attach = () => {
+            if (!window.Echo) return false;
+            window.Echo.channel('dashboard').listen('.dashboard.updated', () => {
+                window.location.reload();
+            });
+            return true;
+        };
+
+        if (!attach()) {
+            const intervalId = setInterval(() => {
+                if (attach()) {
+                    clearInterval(intervalId);
+                }
+            }, 250);
+            setTimeout(() => clearInterval(intervalId), 5000);
+        }
+    }
+
+    registerDashboardReloadListener();
+
+    // Fallback refresh if event delivery fails
+    setInterval(() => window.location.reload(), 15000);
 </script>
 
 <script>

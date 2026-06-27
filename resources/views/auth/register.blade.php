@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Registration | PCMS</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
+    @vite(['resources/js/app.jsx'])
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
     <div class="mx-auto flex min-h-screen w-full max-w-6xl items-start px-4 py-6 sm:items-center sm:px-6 sm:py-10 lg:px-8">
